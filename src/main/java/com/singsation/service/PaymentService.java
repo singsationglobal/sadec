@@ -7,8 +7,12 @@ import com.singsation.repository.PaymentRepository;
 import com.singsation.repository.UserRepository;
 import com.singsation.repository.SongRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,9 +29,13 @@ public class PaymentService {
     
     @Autowired
     private SongRepository songRepository;
+    
+    @Autowired
+    private UserActivityLogService userActivityLogService;
 
     @Transactional
-    public Payment grantDownloadAccess(Long userId, Long songId, String transactionId, BigDecimal amount) {
+    public Payment grantDownloadAccess(@NonNull Long userId, @NonNull Long songId, 
+                                       String transactionId, BigDecimal amount) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         Song song = songRepository.findById(songId)
@@ -44,10 +52,17 @@ public class PaymentService {
         payment.setDownloadAccessExpiry(LocalDateTime.now().plusDays(30));
         payment.setDescription("Video download: " + song.getTitle());
         
-        return paymentRepository.save(payment);
+        Payment savedPayment = paymentRepository.save(payment);
+        
+        // ✅ Log payment success activity
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        userActivityLogService.logActivity(user, "PAYMENT_SUCCESS", 
+            "Paid R" + amount + " for song: " + song.getTitle() + " (Transaction: " + transactionId + ")", request);
+        
+        return savedPayment;
     }
     
-    public boolean hasDownloadAccess(Long userId, Long songId) {
+    public boolean hasDownloadAccess(@NonNull Long userId, @NonNull Long songId) {
         Optional<User> userOpt = userRepository.findById(userId);
         Optional<Song> songOpt = songRepository.findById(songId);
         

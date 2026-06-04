@@ -15,7 +15,6 @@ public class PaymentResponse {
     
     public PaymentResponse() {}
     
-    // Getters and Setters
     public Long getId() {
         return id;
     }

@@ -1,7 +1,6 @@
 package com.singsation.dto;
 
 import com.singsation.model.Song;
-import java.util.Map;
 
 public class SongDTO {
     private Long id;
@@ -18,7 +17,6 @@ public class SongDTO {
         this.video = song.getVideo();
     }
     
-    // Getters
     public Long getId() { return id; }
     public String getTitle() { return title; }
     public String getArtist() { return artist; }

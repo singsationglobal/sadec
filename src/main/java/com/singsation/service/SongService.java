@@ -2,12 +2,16 @@ package com.singsation.service;
 
 import com.singsation.model.Song;
 import com.singsation.repository.SongRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
 public class SongService {
+    
     @Autowired
     private SongRepository songRepository;
     
@@ -15,16 +19,21 @@ public class SongService {
         return songRepository.findAll();
     }
     
+    // NEW: Get only active songs for karaoke app
+    public List<Song> getVisibleSongs() {
+        return songRepository.findByIsActiveTrue();
+    }
+    
     public List<Song> searchSongs(String query) {
         return songRepository.searchSongs(query);
     }
     
-    public Song getSongById(Long id) {
+    public Song getSongById(@NonNull Long id) {
         return songRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Song not found"));
     }
     
-    // Initialize with your songs (call this after startup)
+    @PostConstruct
     public void initializeSongs() {
         if (songRepository.count() == 0) {
             saveSong("One and Only", "Adele", 
@@ -83,6 +92,7 @@ public class SongService {
         song.setArtist(artist);
         song.setUrl(url);
         song.setVideo(video);
+        song.setActive(true);
         songRepository.save(song);
     }
 }

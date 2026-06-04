@@ -6,7 +6,9 @@ import com.singsation.service.PaymentService;
 import com.singsation.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,31 +24,61 @@ public class SongController {
     @Autowired
     private PaymentService paymentService;
     
+    // ONLY return active songs to karaoke app
     @GetMapping
     public List<SongDTO> getAllSongs() {
-        return songService.getAllSongs()
+        return songService.getVisibleSongs()
             .stream()
             .map(SongDTO::new)
             .collect(Collectors.toList());
     }
     
     @GetMapping("/search")
-    public List<SongDTO> searchSongs(@RequestParam String query) {
-        return songService.searchSongs(query)
-            .stream()
-            .map(SongDTO::new)
-            .collect(Collectors.toList());
+    public ResponseEntity<?> searchSongs(@RequestParam(required = false) String query) {
+        if (query == null || query.trim().isEmpty()) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Search query is required");
+            return ResponseEntity.badRequest().body(error);
+        }
+        
+        try {
+            List<Song> songs = songService.searchSongs(query.trim());
+            List<SongDTO> activeSongs = songs.stream()
+                .filter(Song::isActive)
+                .map(SongDTO::new)
+                .collect(Collectors.toList());
+            return ResponseEntity.ok(activeSongs);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Search failed: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
     }
     
     @GetMapping("/{id}")
-    public SongDTO getSong(@PathVariable Long id) {
-        return new SongDTO(songService.getSongById(id));
+    public ResponseEntity<?> getSong(@PathVariable @NonNull Long id) {
+        try {
+            Song song = songService.getSongById(id);
+            // Only return if active
+            if (!song.isActive()) {
+                return ResponseEntity.status(404).body(Map.of("error", "Song not available"));
+            }
+            return ResponseEntity.ok(new SongDTO(song));
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Song not found");
+            return ResponseEntity.status(404).body(error);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to retrieve song");
+            return ResponseEntity.status(500).body(error);
+        }
     }
     
     @GetMapping("/{songId}/download")
     public ResponseEntity<?> downloadVideo(
-            @PathVariable Long songId,
-            @RequestParam Long userId) {
+            @PathVariable @NonNull Long songId,
+            @RequestParam @NonNull Long userId) {
         
         try {
             boolean hasAccess = paymentService.hasDownloadAccess(userId, songId);
@@ -57,7 +89,6 @@ public class SongController {
                 errorResponse.put("paymentRequired", true);
                 errorResponse.put("amount", 50.00);
                 errorResponse.put("currency", "ZAR");
-                errorResponse.put("paymentLink", "https://pay.yoco.com/r/4WXyWk");
                 return ResponseEntity.status(403).body(errorResponse);
             }
             
@@ -74,7 +105,7 @@ public class SongController {
         } catch (RuntimeException e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
+            return ResponseEntity.status(404).body(errorResponse);
         } catch (Exception e) {
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", "An unexpected error occurred");
