@@ -124,6 +124,10 @@ public class AuthController {
                 if (userService.findByEmail(emailInput).isPresent()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
                 }
+                // NEW: Block signup if this email is already used as 2FA by someone else
+                if (userService.findByAlternativeContact(emailInput).isPresent()) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "This email is already linked to another account as 2-way authentication"));
+                }
             } else {
                 normalizedContact = PhoneNumberUtil.normalizeSouthAfricanPhone(emailInput);
                 if (normalizedContact == null) {
@@ -131,6 +135,10 @@ public class AuthController {
                 }
                 if (userService.findByContact(normalizedContact).isPresent()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Phone number already registered"));
+                }
+                // NEW: Block signup if this phone is already used as 2FA by someone else
+                if (userService.findByAlternativeContact(normalizedContact).isPresent()) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "This phone number is already linked to another account as 2-way authentication"));
                 }
             }
             
@@ -160,7 +168,7 @@ public class AuthController {
             String otp = String.format("%06d", new java.util.Random().nextInt(999999));
             String resetToken = UUID.randomUUID().toString();
             
-            // ✅ FIX: Use the actual input (email or normalized phone) as the storage key
+            // Use the actual input (email or normalized phone) as the storage key
             String storageKey = isEmailSignup ? emailInput : normalizedContact;
             
             signupOtpStorage.put(storageKey, 
@@ -189,7 +197,7 @@ public class AuthController {
     
     @PostMapping("/verify-signup-otp")
     public ResponseEntity<?> verifySignupOtp(@RequestBody Map<String, String> request) {
-        // ✅ FIX: Accept either 'email' or 'contact' from Flutter just in case
+        // Accept either 'email' or 'contact' from Flutter just in case
         String emailOrPhone = request.get("email");
         if (emailOrPhone == null || emailOrPhone.trim().isEmpty()) {
             emailOrPhone = request.get("contact");
@@ -199,7 +207,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Email or phone is required"));
         }
         
-        // ✅ FIX: Normalize the incoming value to match the storage key exactly
+        // Normalize the incoming value to match the storage key exactly
         String storageKey = emailOrPhone.trim();
         if (!PhoneNumberUtil.isEmail(storageKey)) {
             storageKey = PhoneNumberUtil.normalizeSouthAfricanPhone(storageKey);
@@ -226,7 +234,7 @@ public class AuthController {
         
         signupOtpStorage.remove(storageKey);
         
-        // ✅ FIX: Find user by either email or contact based on the storage key
+        // Find user by either email or contact based on the storage key
         Optional<User> userOpt;
         if (PhoneNumberUtil.isEmail(storageKey)) {
             userOpt = userService.findByEmail(storageKey);

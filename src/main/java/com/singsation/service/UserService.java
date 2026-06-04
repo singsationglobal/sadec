@@ -66,6 +66,11 @@ public class UserService {
         return userRepository.findByUserid(userid);
     }
     
+    // ✅ NEW: Find user by their 2-way authentication contact (used to block duplicate 2FA signups)
+    public Optional<User> findByAlternativeContact(String alternativeContact) {
+        return userRepository.findByAlternativeContact(alternativeContact);
+    }
+    
     public User saveUser(User user) {
         return userRepository.save(user);
     }

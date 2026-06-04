@@ -86,6 +86,19 @@ public class UserController {
                 }
             }
             
+            // NEW: Check if alternativeContact is already used as 2FA by another user
+            if (userDetails.containsKey("alternativeContact")) {
+                String newAltContact = userDetails.get("alternativeContact").toString().trim();
+                if (!newAltContact.isEmpty()) {
+                    var existingAltUser = userService.findByAlternativeContact(newAltContact);
+                    if (existingAltUser.isPresent() && !existingAltUser.get().getId().equals(userId)) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                            "error", "This contact is already linked to another account as 2-way authentication"
+                        ));
+                    }
+                }
+            }
+            
             User updatedUser = userService.updateUserFromMap(userId, userDetails);
             
             // Log profile update activity
@@ -94,6 +107,7 @@ public class UserController {
             if (userDetails.containsKey("userid")) changes += "UserID changed, ";
             if (userDetails.containsKey("name")) changes += "Name changed, ";
             if (userDetails.containsKey("province")) changes += "Province changed, ";
+            if (userDetails.containsKey("alternativeContact")) changes += "2FA contact changed, ";
             if (changes.isEmpty()) changes = "Profile updated";
             userActivityLogService.logActivity(updatedUser, "PROFILE_UPDATE", changes, request);
             
