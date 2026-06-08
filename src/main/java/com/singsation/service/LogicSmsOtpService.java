@@ -47,7 +47,8 @@ public class LogicSmsOtpService {
             
             String formattedForApi = PhoneNumberUtil.toInternationalFormat(normalizedNumber);
             String otp = String.format("%06d", new Random().nextInt(999999));
-            String message = "Your Singsation verification code is: " + otp + ". Valid for 5 minutes.";
+            // ✅ FIXED: Valid for 60 minutes
+            String message = "Your Singsation verification code is: " + otp + ". Valid for 60 minutes.";
             
             String postData = "username=" + smsConfig.getUsername() +
                 "&password=" + smsConfig.getPassword() +
@@ -73,7 +74,8 @@ public class LogicSmsOtpService {
             logger.info("LogicSMS response: {}", responseBody);
             
             if (responseBody != null && responseBody.contains("<Id>")) {
-                otpStorage.put(normalizedNumber, new OtpData(otp, System.currentTimeMillis() + 300000));
+                // ✅ FIXED: 60 minutes = 3,600,000 milliseconds
+                otpStorage.put(normalizedNumber, new OtpData(otp, System.currentTimeMillis() + 3600000));
                 logger.info("OTP sent successfully to: {}", normalizedNumber);
                 return true;
             } else {
