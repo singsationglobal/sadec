@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/admin/splash-screen")
+@RequestMapping("/api")
 public class SplashScreenController {
 
     @Autowired
@@ -25,7 +25,32 @@ public class SplashScreenController {
     
     private static final Logger logger = LoggerFactory.getLogger(SplashScreenController.class);
 
-    @PostMapping("/upload")
+    // PUBLIC ENDPOINT - for Flutter app
+    @GetMapping("/splash-screen")
+    public ResponseEntity<?> getPublicSplashScreen() {
+        try {
+            Optional<SplashScreen> splash = splashScreenService.getActiveSplashScreen();
+            
+            if (splash != null && splash.isPresent() && splash.get() != null) {
+                SplashScreen activeSplash = splash.get();
+                String imageUrl = activeSplash.getImageUrl();
+                
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    logger.info("Returning active splash screen for user app: {}", imageUrl);
+                    return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
+                }
+            }
+            
+            logger.warn("No active splash screen found for user app");
+            return ResponseEntity.ok(Map.of("imageUrl", (String) null));
+        } catch (Exception e) {
+            logger.error("Error getting public splash screen", e);
+            return ResponseEntity.ok(Map.of("imageUrl", (String) null));
+        }
+    }
+
+    // ADMIN ENDPOINTS
+    @PostMapping("/admin/splash-screen/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile imageFile) {
         try {
             if (imageFile == null || imageFile.isEmpty()) {
@@ -53,7 +78,7 @@ public class SplashScreenController {
         }
     }
 
-    @GetMapping
+    @GetMapping("/admin/splash-screen")
     public ResponseEntity<?> getActiveSplashScreen() {
         try {
             Optional<SplashScreen> splash = splashScreenService.getActiveSplashScreen();
@@ -81,7 +106,7 @@ public class SplashScreenController {
         }
     }
 
-    @GetMapping("/all")
+    @GetMapping("/admin/splash-screen/all")
     public ResponseEntity<?> getAllSplashScreens() {
         try {
             List<SplashScreen> splashScreens = splashScreenService.getAllSplashScreens();
@@ -109,7 +134,7 @@ public class SplashScreenController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/splash-screen/{id}")
     public ResponseEntity<?> deleteSplashScreen(@PathVariable Long id) {
         try {
             if (id == null || id <= 0) {
@@ -128,7 +153,7 @@ public class SplashScreenController {
         }
     }
 
-    @PostMapping("/{id}/activate")
+    @PostMapping("/admin/splash-screen/{id}/activate")
     public ResponseEntity<?> activateSplashScreen(@PathVariable Long id) {
         try {
             if (id == null || id <= 0) {
@@ -152,29 +177,6 @@ public class SplashScreenController {
             logger.error("Error activating splash screen with id: {}", id, e);
             return ResponseEntity.badRequest()
                 .body(Map.of("error", "Failed to activate splash screen: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping("/api/splash-screen")
-    public ResponseEntity<?> getPublicSplashScreen() {
-        try {
-            Optional<SplashScreen> splash = splashScreenService.getActiveSplashScreen();
-            
-            if (splash != null && splash.isPresent() && splash.get() != null) {
-                SplashScreen activeSplash = splash.get();
-                String imageUrl = activeSplash.getImageUrl();
-                
-                if (imageUrl != null && !imageUrl.isEmpty()) {
-                    logger.info("Returning active splash screen for user app: {}", imageUrl);
-                    return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
-                }
-            }
-            
-            logger.warn("No active splash screen found for user app");
-            return ResponseEntity.ok(Map.of("imageUrl", null));
-        } catch (Exception e) {
-            logger.error("Error getting public splash screen", e);
-            return ResponseEntity.ok(Map.of("imageUrl", null));
         }
     }
 }
