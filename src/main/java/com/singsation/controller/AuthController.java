@@ -124,7 +124,6 @@ public class AuthController {
                 if (userService.findByEmail(emailInput).isPresent()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Email already exists"));
                 }
-                // NEW: Block signup if this email is already used as 2FA by someone else
                 if (userService.findByAlternativeContact(emailInput).isPresent()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "This email is already linked to another account as 2-way authentication"));
                 }
@@ -136,7 +135,6 @@ public class AuthController {
                 if (userService.findByContact(normalizedContact).isPresent()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "Phone number already registered"));
                 }
-                // NEW: Block signup if this phone is already used as 2FA by someone else
                 if (userService.findByAlternativeContact(normalizedContact).isPresent()) {
                     return ResponseEntity.badRequest().body(Map.of("error", "This phone number is already linked to another account as 2-way authentication"));
                 }
@@ -168,11 +166,11 @@ public class AuthController {
             String otp = String.format("%06d", new java.util.Random().nextInt(999999));
             String resetToken = UUID.randomUUID().toString();
             
-            // Use the actual input (email or normalized phone) as the storage key
             String storageKey = isEmailSignup ? emailInput : normalizedContact;
             
+            // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
             signupOtpStorage.put(storageKey, 
-                new SignupOtpData(otp, System.currentTimeMillis() + 300000, String.valueOf(savedUser.getId()), token, resetToken));
+                new SignupOtpData(otp, System.currentTimeMillis() + 3600000, String.valueOf(savedUser.getId()), token, resetToken));
             
             if (isEmailSignup) {
                 emailService.sendOtpEmail(savedUser.getEmail(), otp);
@@ -197,7 +195,6 @@ public class AuthController {
     
     @PostMapping("/verify-signup-otp")
     public ResponseEntity<?> verifySignupOtp(@RequestBody Map<String, String> request) {
-        // Accept either 'email' or 'contact' from Flutter just in case
         String emailOrPhone = request.get("email");
         if (emailOrPhone == null || emailOrPhone.trim().isEmpty()) {
             emailOrPhone = request.get("contact");
@@ -207,7 +204,6 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Email or phone is required"));
         }
         
-        // Normalize the incoming value to match the storage key exactly
         String storageKey = emailOrPhone.trim();
         if (!PhoneNumberUtil.isEmail(storageKey)) {
             storageKey = PhoneNumberUtil.normalizeSouthAfricanPhone(storageKey);
@@ -234,7 +230,6 @@ public class AuthController {
         
         signupOtpStorage.remove(storageKey);
         
-        // Find user by either email or contact based on the storage key
         Optional<User> userOpt;
         if (PhoneNumberUtil.isEmail(storageKey)) {
             userOpt = userService.findByEmail(storageKey);
@@ -282,8 +277,9 @@ public class AuthController {
         
         if (sent) {
             String resetToken = UUID.randomUUID().toString();
+            // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
             signupOtpStorage.put(normalizedPhone, 
-                new SignupOtpData(null, System.currentTimeMillis() + 300000, String.valueOf(userOpt.get().getId()), null, resetToken));
+                new SignupOtpData(null, System.currentTimeMillis() + 3600000, String.valueOf(userOpt.get().getId()), null, resetToken));
             
             return ResponseEntity.ok(Map.of(
                 "message", "OTP sent successfully",
@@ -315,8 +311,9 @@ public class AuthController {
             String newResetToken = UUID.randomUUID().toString();
             SignupOtpData existing = signupOtpStorage.get(normalizedPhone);
             if (existing != null) {
+                // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
                 signupOtpStorage.put(normalizedPhone, 
-                    new SignupOtpData(null, System.currentTimeMillis() + 300000, existing.userId, null, newResetToken));
+                    new SignupOtpData(null, System.currentTimeMillis() + 3600000, existing.userId, null, newResetToken));
             }
             
             return ResponseEntity.ok(Map.of(
@@ -346,8 +343,9 @@ public class AuthController {
         String otp = String.format("%06d", new java.util.Random().nextInt(999999));
         String resetToken = UUID.randomUUID().toString();
         
+        // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
         signupOtpStorage.put(email, 
-            new SignupOtpData(otp, System.currentTimeMillis() + 300000, String.valueOf(userOpt.get().getId()), null, resetToken));
+            new SignupOtpData(otp, System.currentTimeMillis() + 3600000, String.valueOf(userOpt.get().getId()), null, resetToken));
         
         try {
             emailService.sendOtpEmail(email, otp);
@@ -382,8 +380,9 @@ public class AuthController {
         }
         
         String newResetToken = UUID.randomUUID().toString();
+        // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
         signupOtpStorage.put(email, 
-            new SignupOtpData(null, System.currentTimeMillis() + 300000, data.userId, null, newResetToken));
+            new SignupOtpData(null, System.currentTimeMillis() + 3600000, data.userId, null, newResetToken));
         
         return ResponseEntity.ok(Map.of(
             "verified", true,
