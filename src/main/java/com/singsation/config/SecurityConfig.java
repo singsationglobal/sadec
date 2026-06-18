@@ -68,6 +68,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints (no authentication needed)
                 .requestMatchers(
+                    "/health", 
                     "/api/auth/**",
                     "/api/webhooks/yoco/**",
                     "/actuator/health",
