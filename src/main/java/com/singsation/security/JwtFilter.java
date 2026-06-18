@@ -28,6 +28,7 @@ public class JwtFilter extends OncePerRequestFilter {
     
     // PUBLIC paths that don't require JWT
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
+        "/health",
         "/api/auth/login",
         "/api/auth/register", 
         "/api/auth/send-sms-otp",
