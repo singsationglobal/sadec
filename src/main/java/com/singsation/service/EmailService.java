@@ -3,41 +3,73 @@ package com.singsation.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailService {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
-    private final JavaMailSender mailSender;
+    private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
-    @Value("${spring.mail.username}")
+    private final RestTemplate restTemplate;
+
+    @Value("${brevo.api.key}")
+    private String brevoApiKey;
+
+    @Value("${app.email.from-address}")
     private String fromEmail;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    @Value("${app.email.from-name:Singsation}")
+    private String fromName;
+
+    public EmailService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
 
-    // ✅ Generic method for sending emails
+    // ✅ Sends email via Brevo HTTPS API (works on Render/Cloud Run — no SMTP port block)
     public void sendEmail(String to, String subject, String htmlContent) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
-            helper.setFrom(fromEmail);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true); // true = HTML content
-            
-            mailSender.send(message);
-            logger.info("✅ Email sent successfully to: {}", to);
-            
-        } catch (MessagingException e) {
+            Map<String, Object> sender = new HashMap<>();
+            sender.put("name", fromName);
+            sender.put("email", fromEmail);
+
+            Map<String, Object> recipient = new HashMap<>();
+            recipient.put("email", to);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("sender", sender);
+            body.put("to", List.of(recipient));
+            body.put("subject", subject);
+            body.put("htmlContent", htmlContent);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            headers.set("api-key", brevoApiKey);
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(BREVO_API_URL, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                logger.info("✅ Email sent via Brevo to: {} (status {})", to, response.getStatusCode().value());
+            } else {
+                logger.error("❌ Brevo returned non-2xx: {} — {}", response.getStatusCode().value(), response.getBody());
+                throw new RuntimeException("Failed to send email: " + response.getStatusCode());
+            }
+
+        } catch (RestClientException e) {
             logger.error("❌ Failed to send email to: {}", to, e);
             throw new RuntimeException("Failed to send email", e);
         }
