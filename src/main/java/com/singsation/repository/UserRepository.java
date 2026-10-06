@@ -1,6 +1,8 @@
 package com.singsation.repository;
 
 import com.singsation.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +20,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     // NEW: Find user by their 2-way authentication contact
     Optional<User> findByAlternativeContact(String alternativeContact);
+    
+    // NEW: Search users by name, surname, userid, email, or contact
+    @Query("SELECT u FROM User u WHERE " +
+           "LOWER(u.userid) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(u.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(u.surname) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(u.contact) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<User> searchUsers(@Param("query") String query, Pageable pageable);
 }
