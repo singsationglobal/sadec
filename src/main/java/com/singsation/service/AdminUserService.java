@@ -60,4 +60,10 @@ public class AdminUserService {
         userRepository.save(user);
         System.out.println("Reset competition entry for user: " + user.getEmail());
     }
+    
+    // I DID ADD THIS METHOD
+        public Page<User> searchUsers(@NonNull String query, @NonNull Pageable pageable) {
+        System.out.println("=== AdminUserService.searchUsers CALLED with query: " + query);
+        return userRepository.searchUsers(query, pageable);
+    }
 }
