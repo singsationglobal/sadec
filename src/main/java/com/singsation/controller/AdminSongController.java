@@ -1,12 +1,14 @@
 package com.singsation.controller;
 
 import com.singsation.model.Song;
+import com.singsation.repository.SongRepository;
 import com.singsation.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,9 @@ public class AdminSongController {
 
     @Autowired
     private SongService songService;
+
+    @Autowired
+    private SongRepository songRepository; // FIXED: Added this missing injection
 
     @GetMapping
     public ResponseEntity<?> getAllSongs(@RequestParam(defaultValue = "0") int page,
