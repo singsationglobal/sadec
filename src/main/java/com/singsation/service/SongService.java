@@ -21,7 +21,6 @@ public class SongService {
         return songRepository.findAll();
     }
     
-    // ADDED: Paginated version to match AdminSongController
     public Page<Song> getAllSongs(Pageable pageable) {
         return songRepository.findAll(pageable);
     }
