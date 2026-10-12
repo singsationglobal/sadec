@@ -21,7 +21,7 @@ public class AdminSongController {
     @GetMapping
     public ResponseEntity<?> getAllSongs(@RequestParam(defaultValue = "0") int page,
                                           @RequestParam(defaultValue = "20") int size) {
-        var songs = songService.getAllSongs(PageRequest.of(page, size)); // Note: You may need to add a paginated method to SongService if not present, or use songRepository.findAll(PageRequest.of(page, size))
+        var songs = songService.getAllSongs(PageRequest.of(page, size));
         Map<String, Object> response = new HashMap<>();
         response.put("songs", songs.getContent());
         response.put("totalPages", songs.getTotalPages());
@@ -39,7 +39,7 @@ public class AdminSongController {
             song.setVideo(songData.get("video") != null ? songData.get("video") : "");
             song.setActive(true);
             
-            Song saved = songService.getSongById(0L); // Placeholder: Replace with your actual create method, e.g., songRepository.save(song)
+            Song saved = songRepository.save(song); 
             
             Map<String, Object> response = new HashMap<>();
             response.put("id", saved.getId());
@@ -50,7 +50,7 @@ public class AdminSongController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-                }
+        }
     }
 
     @PutMapping("/{id}")
@@ -71,8 +71,7 @@ public class AdminSongController {
                 existingSong.setVideo(songData.get("video"));
             }
             
-            Song updated = songService.getSongById(id); // Placeholder: Replace with actual save method
-            
+            Song updated = songRepository.save(existingSong);
             return ResponseEntity.ok(Map.of(
                 "message", "Song updated successfully",
                 "song", updated
@@ -84,29 +83,30 @@ public class AdminSongController {
     
     @PostMapping("/{id}/toggle-visibility")
     public ResponseEntity<?> toggleSongVisibility(@PathVariable @NonNull Long id) {
-        boolean nowVisible = true; // Placeholder: Replace with actual toggle logic
-        String status = nowVisible ? "visible" : "hidden";
+        Song song = songService.getSongById(id);
+        song.setActive(!song.isActive());
+        songRepository.save(song);
         return ResponseEntity.ok(Map.of(
-            "message", "Song is now " + status,
-            "isActive", nowVisible
+            "message", "Song is now " + (song.isActive() ? "visible" : "hidden"),
+            "isActive", song.isActive()
         ));
     }
     
     @PostMapping("/{id}/hide")
     public ResponseEntity<?> hideSong(@PathVariable @NonNull Long id) {
-        songService.hideSongsBulk(List.of(id)); // Reusing bulk method for single item
+        songService.hideSongsBulk(List.of(id));
         return ResponseEntity.ok(Map.of("message", "Song hidden from users"));
     }
     
     @PostMapping("/{id}/unhide")
     public ResponseEntity<?> unhideSong(@PathVariable @NonNull Long id) {
-        songService.unhideSongsBulk(List.of(id)); // Reusing bulk method for single item
+        songService.unhideSongsBulk(List.of(id));
         return ResponseEntity.ok(Map.of("message", "Song visible to users"));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteSong(@PathVariable @NonNull Long id) {
-        // songService.deleteSong(id); // Uncomment if you have this method
+        songService.deleteSongById(id);
         return ResponseEntity.ok(Map.of("message", "Song deleted"));
     }
 
