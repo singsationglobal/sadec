@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,7 +20,6 @@ public class SongService {
         return songRepository.findAll();
     }
     
-    // NEW: Get only active songs for karaoke app
     public List<Song> getVisibleSongs() {
         return songRepository.findByIsActiveTrue();
     }
@@ -94,5 +94,25 @@ public class SongService {
         song.setVideo(video);
         song.setActive(true);
         songRepository.save(song);
+    }
+
+    // ========================================================================
+    // NEW: Bulk Hide Service Method
+    // ========================================================================
+    @Transactional
+    public void hideSongsBulk(List<Long> songIds) {
+        if (songIds != null && !songIds.isEmpty()) {
+            songRepository.hideSongsBulk(songIds);
+        }
+    }
+
+    // ========================================================================
+    // NEW: Bulk Unhide Service Method
+    // ========================================================================
+    @Transactional
+    public void unhideSongsBulk(List<Long> songIds) {
+        if (songIds != null && !songIds.isEmpty()) {
+            songRepository.unhideSongsBulk(songIds);
+        }
     }
 }
