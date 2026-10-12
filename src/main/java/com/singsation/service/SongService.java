@@ -4,6 +4,8 @@ import com.singsation.model.Song;
 import com.singsation.repository.SongRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,11 @@ public class SongService {
     
     public List<Song> getAllSongs() {
         return songRepository.findAll();
+    }
+    
+    // ADDED: Paginated version to match AdminSongController
+    public Page<Song> getAllSongs(Pageable pageable) {
+        return songRepository.findAll(pageable);
     }
     
     public List<Song> getVisibleSongs() {
@@ -107,5 +114,9 @@ public class SongService {
         if (songIds != null && !songIds.isEmpty()) {
             songRepository.unhideSongsBulk(songIds);
         }
+    }
+    
+    public void deleteSongById(Long id) {
+        songRepository.deleteById(id);
     }
 }
