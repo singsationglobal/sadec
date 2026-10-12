@@ -15,27 +15,18 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     @Query("SELECT s FROM Song s WHERE LOWER(s.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(s.artist) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Song> searchSongs(@Param("query") String query);
     
-    // Get only active songs (visible to users)
     List<Song> findByIsActiveTrue();
     
-    // Get active songs with pagination
     Page<Song> findByIsActiveTrue(Pageable pageable);
     
-    // Search only active songs
     @Query("SELECT s FROM Song s WHERE s.isActive = true AND (LOWER(s.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(s.artist) LIKE LOWER(CONCAT('%', :query, '%')))")
     List<Song> searchActiveSongs(@Param("query") String query);
 
-    // ========================================================================
-    // NEW: Bulk Hide Songs (Extremely fast, updates database directly)
-    // ========================================================================
     @Modifying
     @Transactional
     @Query("UPDATE Song s SET s.isActive = false WHERE s.id IN :ids")
     void hideSongsBulk(@Param("ids") List<Long> ids);
 
-    // ========================================================================
-    // NEW: Bulk Unhide Songs (Extremely fast, updates database directly)
-    // ========================================================================
     @Modifying
     @Transactional
     @Query("UPDATE Song s SET s.isActive = true WHERE s.id IN :ids")
