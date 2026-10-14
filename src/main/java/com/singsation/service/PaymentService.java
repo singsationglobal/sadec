@@ -6,6 +6,8 @@ import com.singsation.model.Song;
 import com.singsation.repository.PaymentRepository;
 import com.singsation.repository.UserRepository;
 import com.singsation.repository.SongRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,8 @@ import java.util.Optional;
 
 @Service
 public class PaymentService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
 
     @Autowired
     private PaymentRepository paymentRepository;
@@ -76,5 +80,17 @@ public class PaymentService {
     
     public Optional<Payment> getPaymentByTransactionId(String transactionId) {
         return paymentRepository.findByTransactionId(transactionId);
+    }
+
+    @Transactional
+    public void addCoinsToUser(Long userId, Integer coinAmount) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+        
+        int currentBalance = user.getCoinBalance();
+        user.setCoinBalance(currentBalance + coinAmount);
+        userRepository.save(user);
+        
+        logger.info("Added {} coins to user {}. New balance: {}", coinAmount, userId, user.getCoinBalance());
     }
 }
