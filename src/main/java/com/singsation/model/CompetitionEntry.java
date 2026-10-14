@@ -12,15 +12,22 @@ public class CompetitionEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+    
     @Column(nullable = false)
     private String category;
     
-    @Column(name = "artist_name")
+    @Column(name = "artist_name", nullable = false)
     private String artistName;
     
-    private Integer age;
+    @Column(nullable = false)
+    private String userid; // The unique stage name/ID
     
-    private String userid;
+    @Column(name = "video_url", columnDefinition = "TEXT")
+    private String videoUrl;
+    
+    private Integer age;
     
     @Column(name = "contact_info")
     private String contactInfo;
@@ -28,11 +35,11 @@ public class CompetitionEntry {
     @Column(nullable = false)
     private String province;
     
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-    
     @Column(name = "entry_date")
     private LocalDateTime entryDate;
+    
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
     
     private String status;
     
@@ -45,24 +52,40 @@ public class CompetitionEntry {
     
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-    public String getArtistName() { return artistName; }
-    public void setArtistName(String artistName) { this.artistName = artistName; }
-    public Integer getAge() { return age; }
-    public void setAge(Integer age) { this.age = age; }
-    public String getUserid() { return userid; }
-    public void setUserid(String userid) { this.userid = userid; }
-    public String getContactInfo() { return contactInfo; }
-    public void setContactInfo(String contactInfo) { this.contactInfo = contactInfo; }
-    public String getProvince() { return province; }
-    public void setProvince(String province) { this.province = province; }
+    
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
+    
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    
+    public String getArtistName() { return artistName; }
+    public void setArtistName(String artistName) { this.artistName = artistName; }
+    
+    public String getUserid() { return userid; }
+    public void setUserid(String userid) { this.userid = userid; }
+    
+    public String getVideoUrl() { return videoUrl; }
+    public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
+    
+    public Integer getAge() { return age; }
+    public void setAge(Integer age) { this.age = age; }
+    
+    public String getContactInfo() { return contactInfo; }
+    public void setContactInfo(String contactInfo) { this.contactInfo = contactInfo; }
+    
+    public String getProvince() { return province; }
+    public void setProvince(String province) { this.province = province; }
+    
     public LocalDateTime getEntryDate() { return entryDate; }
     public void setEntryDate(LocalDateTime entryDate) { this.entryDate = entryDate; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 }
