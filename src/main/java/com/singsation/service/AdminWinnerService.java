@@ -32,7 +32,6 @@ public class AdminWinnerService {
         announcement.setAnnouncedBy(currentAdmin);
         announcement.setAnnouncedAt(LocalDateTime.now());
         
-        // ✅ UPDATED: Only deactivate if the existing winner is NOT deleted
         Optional<WinnerAnnouncement> existing = winnerRepository.findByCategoryAndIsActiveTrueAndIsDeletedFalse(announcement.getCategory());
         existing.ifPresent(winner -> {
             winner.setActive(false);
@@ -46,6 +45,11 @@ public class AdminWinnerService {
     // ✅ UPDATED: Only fetch winners that are active AND NOT deleted
     public List<WinnerAnnouncement> getActiveWinners() {
         return winnerRepository.findByIsActiveTrueAndIsDeletedFalseOrderByAnnouncedAtDesc();
+    }
+
+    // ✅ NEW: Fetch deleted winners for Recycle Bin
+    public List<WinnerAnnouncement> getDeletedWinners() {
+        return winnerRepository.findByIsDeletedTrueOrderByDeletedAtDesc();
     }
 
     public Optional<WinnerAnnouncement> getWinnerByCategory(@NonNull String category) {
@@ -76,6 +80,18 @@ public class AdminWinnerService {
         winner.setActive(false);
         winner.setIsDeleted(true);
         winner.setDeletedAt(LocalDateTime.now());
+        winnerRepository.save(winner);
+    }
+
+    // ✅ NEW: Restore from Recycle Bin
+    @Transactional
+    public void restoreWinner(Long id) {
+        WinnerAnnouncement winner = winnerRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Winner not found with id: " + id));
+        
+        winner.setIsDeleted(false);
+        winner.setDeletedAt(null);
+        winner.setActive(true);
         winnerRepository.save(winner);
     }
 
