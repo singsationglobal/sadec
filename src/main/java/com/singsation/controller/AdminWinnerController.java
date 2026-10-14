@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/winners")
@@ -25,6 +26,13 @@ public class AdminWinnerController {
     @GetMapping("/active")
     public ResponseEntity<?> getActiveWinners() {
         return ResponseEntity.ok(adminWinnerService.getActiveWinners());
+    }
+
+    // ✅ NEW: Get Deleted Winners (For Recycle Bin Screen)
+    @GetMapping("/deleted")
+    public ResponseEntity<?> getDeletedWinners() {
+        List<WinnerAnnouncement> deletedWinners = adminWinnerService.getDeletedWinners();
+        return ResponseEntity.ok(Map.of("winners", deletedWinners));
     }
 
     @GetMapping("/category/{category}")
@@ -44,7 +52,7 @@ public class AdminWinnerController {
         }
     }
 
-    // ✅ NEW: Soft Delete Endpoint (Matches Flutter POST request)
+    // ✅ NEW: Soft Delete Endpoint (Move to Bin)
     @PostMapping("/{id}/delete")
     public ResponseEntity<?> moveToRecycleBin(@PathVariable @NonNull Long id) {
         try {
@@ -55,7 +63,18 @@ public class AdminWinnerController {
         }
     }
 
-    // ✅ NEW: Permanent Delete Endpoint (Matches Flutter DELETE request)
+    // ✅ NEW: Restore Endpoint
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<?> restoreWinner(@PathVariable @NonNull Long id) {
+        try {
+            adminWinnerService.restoreWinner(id);
+            return ResponseEntity.ok(Map.of("message", "Winner restored successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ✅ NEW: Permanent Delete Endpoint (Super Admin Only)
     @DeleteMapping("/{id}/permanent")
     public ResponseEntity<?> permanentDelete(@PathVariable @NonNull Long id) {
         try {
