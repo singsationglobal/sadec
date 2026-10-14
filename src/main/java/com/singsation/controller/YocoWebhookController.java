@@ -183,6 +183,62 @@ public class YocoWebhookController {
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to create checkout: " + e.getMessage()));
         }
     }
+
+    @PostMapping("/create-coin-checkout")
+    public ResponseEntity<?> createCoinCheckout(@RequestBody Map<String, String> request) {
+        try {
+            String userId = request.get("userId");
+            String amountStr = request.get("amount");
+            String coinAmountStr = request.get("coinAmount");
+            
+            if (userId == null || userId.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
+            if (amountStr == null || amountStr.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "amount is required"));
+            if (coinAmountStr == null || coinAmountStr.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "coinAmount is required"));
+            
+            Long amount = Long.parseLong(amountStr);
+            Integer coinAmount = Integer.parseInt(coinAmountStr);
+            
+            Map<String, Object> checkoutRequest = new HashMap<>();
+            checkoutRequest.put("amount", amount);
+            checkoutRequest.put("currency", "ZAR");
+            
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("userId", userId);
+            metadata.put("coinAmount", String.valueOf(coinAmount)); // <-- Tells the webhook this is for coins
+            checkoutRequest.put("metadata", metadata);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + yocoConfig.getSecretKey());
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(checkoutRequest, headers);
+            
+            ResponseEntity<String> yocoResponse = restTemplate.postForEntity(
+                yocoConfig.getApiUrl() + "/checkouts",
+                entity,
+                String.class
+            );
+            
+            if (yocoResponse.getStatusCode() != HttpStatus.OK) {
+                logger.error("Yoco API error: {}", yocoResponse.getStatusCode());
+                return ResponseEntity.status(502).body(Map.of("error", "Payment service unavailable"));
+            }
+            
+            JsonNode jsonResponse = objectMapper.readTree(yocoResponse.getBody());
+            String redirectUrl = safeGetText(jsonResponse, "redirectUrl");
+            String checkoutId = safeGetText(jsonResponse, "id");
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("redirectUrl", redirectUrl);
+            response.put("checkoutId", checkoutId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Coin checkout creation failed", e);
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to create checkout: " + e.getMessage()));
+        }
+    }
     
     @PostMapping("/payment")
     public ResponseEntity<?> handlePaymentWebhook(
