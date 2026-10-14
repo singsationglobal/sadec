@@ -32,7 +32,8 @@ public class AdminWinnerService {
         announcement.setAnnouncedBy(currentAdmin);
         announcement.setAnnouncedAt(LocalDateTime.now());
         
-        Optional<WinnerAnnouncement> existing = winnerRepository.findByCategoryAndIsActiveTrue(announcement.getCategory());
+        // ✅ UPDATED: Only deactivate if the existing winner is NOT deleted
+        Optional<WinnerAnnouncement> existing = winnerRepository.findByCategoryAndIsActiveTrueAndIsDeletedFalse(announcement.getCategory());
         existing.ifPresent(winner -> {
             winner.setActive(false);
             winnerRepository.save(winner);
@@ -42,15 +43,15 @@ public class AdminWinnerService {
         return winnerRepository.save(announcement);
     }
 
+    // ✅ UPDATED: Only fetch winners that are active AND NOT deleted
     public List<WinnerAnnouncement> getActiveWinners() {
-        return winnerRepository.findByIsActiveTrueOrderByAnnouncedAtDesc();
+        return winnerRepository.findByIsActiveTrueAndIsDeletedFalseOrderByAnnouncedAtDesc();
     }
 
     public Optional<WinnerAnnouncement> getWinnerByCategory(@NonNull String category) {
-        return winnerRepository.findByCategoryAndIsActiveTrue(category);
+        return winnerRepository.findByCategoryAndIsActiveTrueAndIsDeletedFalse(category);
     }
 
-    // ✅ UPDATE WINNER METHOD
     @Transactional
     public WinnerAnnouncement updateWinner(Long id, WinnerAnnouncement updatedWinner) {
         WinnerAnnouncement existing = winnerRepository.findById(id)
@@ -66,9 +67,29 @@ public class AdminWinnerService {
         return winnerRepository.save(existing);
     }
 
-    // ✅ DELETE WINNER METHOD
+    // ✅ NEW: Move to Recycle Bin (Soft Delete)
     @Transactional
-    public void deleteWinner(Long id) {
+    public void moveToRecycleBin(Long id) {
+        WinnerAnnouncement winner = winnerRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Winner not found with id: " + id));
+        
+        winner.setActive(false);
+        winner.setIsDeleted(true);
+        winner.setDeletedAt(LocalDateTime.now());
+        winnerRepository.save(winner);
+    }
+
+    // ✅ NEW: Permanent Delete (Super Admin Only)
+    @Transactional
+    public void permanentDelete(Long id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Admin currentAdmin = adminRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Admin not found"));
+        
+        if (!"SUPER_ADMIN".equals(currentAdmin.getRole().getName())) {
+            throw new RuntimeException("Access Denied: Only Super Admins can permanently delete.");
+        }
+
         if (!winnerRepository.existsById(id)) {
             throw new RuntimeException("Winner not found with id: " + id);
         }
