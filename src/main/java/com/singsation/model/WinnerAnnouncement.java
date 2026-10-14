@@ -32,6 +32,13 @@ public class WinnerAnnouncement {
     @Column(nullable = false)
     private boolean isActive = true;
 
+    // ✅ NEW FIELDS FOR RECYCLE BIN
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Column(nullable = false)
     private LocalDateTime announcedAt = LocalDateTime.now();
 
@@ -58,6 +65,13 @@ public class WinnerAnnouncement {
     public void setMessage(String message) { this.message = message; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    
+    // ✅ NEW GETTERS AND SETTERS
+    public boolean isDeleted() { return isDeleted; }
+    public void setIsDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
     public LocalDateTime getAnnouncedAt() { return announcedAt; }
     public void setAnnouncedAt(LocalDateTime announcedAt) { this.announcedAt = announcedAt; }
     public Admin getAnnouncedBy() { return announcedBy; }
