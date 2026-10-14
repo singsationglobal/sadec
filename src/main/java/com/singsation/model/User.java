@@ -59,6 +59,10 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<CompetitionEntry> entries;
+
+    // Add this field inside your User class:
+    @Column(name = "coin_balance", nullable = false)
+    private int coinBalance = 0;
     
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -94,4 +98,7 @@ public class User {
     public void setFavorites(List<Favorite> favorites) { this.favorites = favorites; }
     public List<CompetitionEntry> getEntries() { return entries; }
     public void setEntries(List<CompetitionEntry> entries) { this.entries = entries; }
+    // Add these getters and setters:
+    public int getCoinBalance() { return coinBalance; }
+    public void setCoinBalance(int coinBalance) { this.coinBalance = coinBalance; }
 }
