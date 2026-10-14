@@ -1,6 +1,8 @@
 package com.singsation.controller;
 
 import com.singsation.model.CompetitionEntry;
+import com.singsation.repository.CompetitionEntryRepository;
+import com.singsation.repository.VoteRepository;
 import com.singsation.service.CompetitionService;
 import com.singsation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +12,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,6 +26,12 @@ public class CompetitionController {
     
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CompetitionEntryRepository entryRepository;
+
+    @Autowired
+    private VoteRepository voteRepository;
     
     private Long getAuthenticatedUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -126,5 +136,28 @@ public class CompetitionController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred. Please try again."));
         }
+    }
+
+    @GetMapping("/entries")
+    public ResponseEntity<?> getEntries() {
+        List<Object[]> results = entryRepository.findAllWithVoteCounts();
+        List<Map<String, Object>> response = new ArrayList<>();
+
+        for (Object[] row : results) {
+            CompetitionEntry entry = (CompetitionEntry) row[0];
+            long voteCount = (long) row[1];
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", entry.getId());
+            map.put("userId", entry.getUserId());
+            map.put("category", entry.getCategory());
+            map.put("artistName", entry.getArtistName());
+            map.put("userid", entry.getUserid());
+            map.put("videoUrl", entry.getVideoUrl());
+            map.put("votes", voteCount);
+            response.add(map);
+        }
+
+        return ResponseEntity.ok(response);
     }
 }
