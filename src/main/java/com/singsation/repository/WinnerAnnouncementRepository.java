@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface WinnerAnnouncementRepository extends JpaRepository<WinnerAnnouncement, Long> {
-    Optional<WinnerAnnouncement> findByCategoryAndIsActiveTrue(String category);
-    List<WinnerAnnouncement> findByIsActiveTrueOrderByAnnouncedAtDesc();
+    
+    // ✅ UPDATED: Only find active winners that are NOT deleted
+    Optional<WinnerAnnouncement> findByCategoryAndIsActiveTrueAndIsDeletedFalse(String category);
+    List<WinnerAnnouncement> findByIsActiveTrueAndIsDeletedFalseOrderByAnnouncedAtDesc();
     List<WinnerAnnouncement> findAllByOrderByAnnouncedAtDesc();
 }
