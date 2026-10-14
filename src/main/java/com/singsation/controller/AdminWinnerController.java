@@ -34,7 +34,6 @@ public class AdminWinnerController {
             .orElse(ResponseEntity.notFound().build());
     }
 
-    // ✅ UPDATE WINNER ENDPOINT
     @PutMapping("/{id}")
     public ResponseEntity<?> updateWinner(@PathVariable Long id, @RequestBody WinnerAnnouncement announcement) {
         try {
@@ -45,13 +44,28 @@ public class AdminWinnerController {
         }
     }
 
-    // ✅ DELETE WINNER ENDPOINT
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteWinner(@PathVariable @NonNull Long id) {
-        adminWinnerService.deleteWinner(id);
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Winner deleted successfully");
-        response.put("id", id);
-        return ResponseEntity.ok(response);
+    // ✅ NEW: Soft Delete Endpoint (Matches Flutter POST request)
+    @PostMapping("/{id}/delete")
+    public ResponseEntity<?> moveToRecycleBin(@PathVariable @NonNull Long id) {
+        try {
+            adminWinnerService.moveToRecycleBin(id);
+            return ResponseEntity.ok(Map.of("message", "Winner moved to Recycle Bin"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ✅ NEW: Permanent Delete Endpoint (Matches Flutter DELETE request)
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<?> permanentDelete(@PathVariable @NonNull Long id) {
+        try {
+            adminWinnerService.permanentDelete(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Winner permanently deleted");
+            response.put("id", id);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
+        }
     }
 }
