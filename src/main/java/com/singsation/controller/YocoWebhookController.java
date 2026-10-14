@@ -204,7 +204,7 @@ public class YocoWebhookController {
             
             Map<String, String> metadata = new HashMap<>();
             metadata.put("userId", userId);
-            metadata.put("coinAmount", String.valueOf(coinAmount)); // <-- Tells the webhook this is for coins
+            metadata.put("coinAmount", String.valueOf(coinAmount));
             checkoutRequest.put("metadata", metadata);
             
             HttpHeaders headers = new HttpHeaders();
@@ -306,17 +306,17 @@ public class YocoWebhookController {
             
             String userIdStr = safeGetText(metadata, "userId");
             String songIdStr = safeGetText(metadata, "songId");
+            String coinAmountStr = safeGetText(metadata, "coinAmount"); // <-- ADDED
             
-            if (userIdStr.isEmpty() || songIdStr.isEmpty()) {
-                throw new RuntimeException("Missing userId or songId in metadata");
+            if (userIdStr.isEmpty()) {
+                throw new RuntimeException("Missing userId in metadata");
             }
             
-            Long userId, songId;
+            Long userId;
             try {
                 userId = Long.parseLong(userIdStr);
-                songId = Long.parseLong(songIdStr);
             } catch (NumberFormatException e) {
-                throw new RuntimeException("Invalid userId or songId format in metadata");
+                throw new RuntimeException("Invalid userId format in metadata");
             }
             
             if (!"SUCCESSFUL".equals(status)) {
@@ -332,6 +332,30 @@ public class YocoWebhookController {
                 log.setErrorMessage("Duplicate payment record");
                 webhookLogRepository.save(log);
                 return ResponseEntity.ok(Map.of("status", "already_recorded"));
+            }
+            
+            // ✅ NEW: CHECK IF THIS IS A COIN PURCHASE
+            if (!coinAmountStr.isEmpty()) {
+                Integer coinAmount = Integer.parseInt(coinAmountStr);
+                
+                paymentService.addCoinsToUser(userId, coinAmount);
+                
+                log.setProcessed(true);
+                webhookLogRepository.save(log);
+                logger.info("Coins added successfully via webhook: userId={}, coins={}", userId, coinAmount);
+                return ResponseEntity.ok(Map.of("status", "success"));
+            }
+            
+            // ✅ EXISTING: OTHERWISE, IT'S A SONG DOWNLOAD PURCHASE
+            if (songIdStr.isEmpty()) {
+                throw new RuntimeException("Missing songId in metadata");
+            }
+            
+            Long songId;
+            try {
+                songId = Long.parseLong(songIdStr);
+            } catch (NumberFormatException e) {
+                throw new RuntimeException("Invalid songId format in metadata");
             }
             
             paymentService.grantDownloadAccess(userId, songId, paymentId, amount);
