@@ -29,10 +29,10 @@ public class WinnerAnnouncement {
     @Column(columnDefinition = "TEXT")
     private String message;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
-    // ✅ NEW FIELDS FOR RECYCLE BIN
+    // ✅ ADD THESE TWO FIELDS FOR RECYCLE BIN
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
