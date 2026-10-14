@@ -10,5 +10,7 @@ public interface WinnerAnnouncementRepository extends JpaRepository<WinnerAnnoun
     // ✅ UPDATED: Only find active winners that are NOT deleted
     Optional<WinnerAnnouncement> findByCategoryAndIsActiveTrueAndIsDeletedFalse(String category);
     List<WinnerAnnouncement> findByIsActiveTrueAndIsDeletedFalseOrderByAnnouncedAtDesc();
-    List<WinnerAnnouncement> findAllByOrderByAnnouncedAtDesc();
+    
+    // ✅ NEW: Fetch deleted winners for the Recycle Bin
+    List<WinnerAnnouncement> findByIsDeletedTrueOrderByDeletedAtDesc();
 }
