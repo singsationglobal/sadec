@@ -39,9 +39,6 @@ public class AdminUserController {
         return ResponseEntity.ok(response);
     }
 
-    // ─── 1. SEARCH ENDPOINT ───
-    // CRITICAL: This MUST be placed BEFORE /{id} to prevent Spring from 
-    // trying to parse the word "search" as a Long ID, which would crash the app.
     @GetMapping("/search")
     public ResponseEntity<?> searchUsers(
             @RequestParam(defaultValue = "") String query,
@@ -96,24 +93,23 @@ public class AdminUserController {
         return ResponseEntity.ok(Map.of("message", "Competition entry reset successfully"));
     }
 
-    // ─── 2. MESSAGE ENDPOINT ───
+    // ✅ UPDATED MESSAGE ENDPOINT: Now actually saves to the database
     @PostMapping("/{userId}/message")
     public ResponseEntity<?> sendMessageToUser(
             @PathVariable @NonNull Long userId,
             @RequestBody Map<String, String> request) {
         
         try {
-            String messageType = request.getOrDefault("messageType", "General Update");
-            String messageContent = request.getOrDefault("messageContent", "");
+            String messageType = request.get("messageType");
+            String messageContent = request.get("messageContent");
             
-            User user = adminUserService.getUserById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            if (messageType == null || messageContent == null || messageContent.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "messageType and messageContent are required"));
+            }
             
-            System.out.println("=== MESSAGE SENT to User ID: " + userId + 
-                               " | Type: " + messageType + 
-                               " | Content: " + messageContent);
+            adminUserService.sendMessageToUser(userId, messageType, messageContent);
             
-            return ResponseEntity.ok(Map.of("message", "Message sent successfully to " + user.getEmail()));
+            return ResponseEntity.ok(Map.of("message", "Message sent successfully to user"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
