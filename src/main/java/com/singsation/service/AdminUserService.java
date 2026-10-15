@@ -1,6 +1,8 @@
 package com.singsation.service;
 
+import com.singsation.model.Complaint;
 import com.singsation.model.User;
+import com.singsation.repository.ComplaintRepository;
 import com.singsation.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -8,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -15,6 +19,9 @@ public class AdminUserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ComplaintRepository complaintRepository; // ✅ ADDED
 
     public Page<User> getAllUsers(@NonNull Pageable pageable) {
         System.out.println("=== AdminUserService.getAllUsers CALLED ===");
@@ -52,7 +59,6 @@ public class AdminUserService {
         userRepository.save(user);
     }
 
-    // ADD THIS METHOD - RESET COMPETITION ENTRY
     @Transactional
     public void resetCompetitionEntry(@NonNull Long id) {
         User user = getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
@@ -61,9 +67,27 @@ public class AdminUserService {
         System.out.println("Reset competition entry for user: " + user.getEmail());
     }
     
-    // I DID ADD THIS METHOD
-        public Page<User> searchUsers(@NonNull String query, @NonNull Pageable pageable) {
+    public Page<User> searchUsers(@NonNull String query, @NonNull Pageable pageable) {
         System.out.println("=== AdminUserService.searchUsers CALLED with query: " + query);
         return userRepository.searchUsers(query, pageable);
+    }
+
+    // ✅ NEW METHOD: Saves admin message to the complaints table
+    @Transactional
+    public void sendMessageToUser(@NonNull Long userId, @NonNull String messageType, @NonNull String messageContent) {
+        User user = getUserById(userId).orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+        
+        Complaint adminMessage = new Complaint();
+        adminMessage.setUser(user);
+        adminMessage.setSubject("Message from Admin: " + messageType);
+        adminMessage.setMessage(messageContent);
+        adminMessage.setStatus("OPEN"); // Shows as a new ticket for the user
+        adminMessage.setIsDeleted(false);
+        adminMessage.setAdminReply(null); // User can reply to this later
+        adminMessage.setCreatedAt(LocalDateTime.now());
+        adminMessage.setUpdatedAt(LocalDateTime.now());
+        
+        complaintRepository.save(adminMessage);
+        System.out.println("=== Admin message saved to complaints for User ID: " + userId + " | Type: " + messageType);
     }
 }
