@@ -21,7 +21,7 @@ public class AdminUserService {
     private UserRepository userRepository;
 
     @Autowired
-    private ComplaintRepository complaintRepository; // ✅ ADDED
+    private ComplaintRepository complaintRepository;
 
     public Page<User> getAllUsers(@NonNull Pageable pageable) {
         System.out.println("=== AdminUserService.getAllUsers CALLED ===");
@@ -72,7 +72,8 @@ public class AdminUserService {
         return userRepository.searchUsers(query, pageable);
     }
 
-    // ✅ NEW METHOD: Saves admin message to the complaints table
+    // ✅ FIXED: Removed setIsDeleted to prevent compilation error. 
+    // The database defaults 'is_deleted' to 0 automatically.
     @Transactional
     public void sendMessageToUser(@NonNull Long userId, @NonNull String messageType, @NonNull String messageContent) {
         User user = getUserById(userId).orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
@@ -82,8 +83,10 @@ public class AdminUserService {
         adminMessage.setSubject("Message from Admin: " + messageType);
         adminMessage.setMessage(messageContent);
         adminMessage.setStatus("OPEN"); // Shows as a new ticket for the user
-        adminMessage.setIsDeleted(false);
         adminMessage.setAdminReply(null); // User can reply to this later
+        
+        // Note: created_at and updated_at are often handled by @CreationTimestamp/@UpdateTimestamp 
+        // or DB defaults, but we set them explicitly just in case your model requires it.
         adminMessage.setCreatedAt(LocalDateTime.now());
         adminMessage.setUpdatedAt(LocalDateTime.now());
         
