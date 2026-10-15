@@ -23,11 +23,11 @@ public class AdminComplaintService {
         return complaintRepository.findByIsDeletedFalse(pageable);
     }
 
-    // ✅ NEW: Get only soft-deleted items
     public Page<Complaint> getDeletedComplaints(Pageable pageable) {
         return complaintRepository.findByIsDeletedTrue(pageable);
     }
 
+    @Transactional
     public Complaint replyToComplaint(Long id, String adminReply, String status) {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
@@ -37,32 +37,33 @@ public class AdminComplaintService {
         return complaintRepository.save(complaint);
     }
 
-    // ✅ NEW: Soft Delete
     @Transactional
     public void moveToBin(Long id) {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
-        complaint.setIsDeleted(true);
+        complaint.setDeleted(true); // ✅ Correct setter name
         complaint.setDeletedAt(LocalDateTime.now());
         complaintRepository.save(complaint);
     }
 
-    // ✅ NEW: Restore
     @Transactional
     public void restoreFromBin(Long id) {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
-        complaint.setIsDeleted(false);
+        complaint.setDeleted(false); // ✅ Correct setter name
         complaint.setDeletedAt(null);
         complaintRepository.save(complaint);
     }
 
-    // ✅ NEW: Permanent Delete
     @Transactional
     public void permanentDelete(Long id) {
         if (!complaintRepository.existsById(id)) {
             throw new RuntimeException("Complaint not found");
         }
         complaintRepository.deleteById(id);
+    }
+
+    public long getTotalComplaintsCount() {
+        return complaintRepository.countByIsDeletedFalse();
     }
 }
