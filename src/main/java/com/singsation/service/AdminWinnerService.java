@@ -15,20 +15,18 @@ public class AdminWinnerService {
     @Autowired
     private WinnerAnnouncementRepository winnerRepository;
 
-    // ✅ Returns ALL active winners, stacked newest first (1st, 2nd, 3rd)
     public List<WinnerAnnouncement> getActiveWinners() {
         return winnerRepository.findByIsActiveTrueAndIsDeletedFalseOrderByAnnouncedAtDesc();
     }
 
-    // ✅ Returns ONLY deleted winners for the Recycle Bin
     public List<WinnerAnnouncement> getDeletedWinners() {
         return winnerRepository.findByIsDeletedTrueOrderByDeletedAtDesc();
     }
 
     @Transactional
     public WinnerAnnouncement announceWinner(WinnerAnnouncement announcement) {
-        announcement.setIsActive(true);
-        announcement.setIsDeleted(false);
+        announcement.setActive(true);
+        announcement.setDeleted(false);
         announcement.setAnnouncedAt(LocalDateTime.now());
         return winnerRepository.save(announcement);
     }
@@ -48,12 +46,11 @@ public class AdminWinnerService {
         return winnerRepository.save(existing);
     }
 
-    // ✅ Moves to Recycle Bin (No popup needed on frontend)
     @Transactional
     public void moveToBin(Long id) {
         WinnerAnnouncement winner = winnerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Winner not found"));
-        winner.setIsDeleted(true);
+        winner.setDeleted(true);
         winner.setDeletedAt(LocalDateTime.now());
         winnerRepository.save(winner);
     }
@@ -62,7 +59,7 @@ public class AdminWinnerService {
     public void restoreFromBin(Long id) {
         WinnerAnnouncement winner = winnerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Winner not found"));
-        winner.setIsDeleted(false);
+        winner.setDeleted(false);
         winner.setDeletedAt(null);
         winnerRepository.save(winner);
     }
