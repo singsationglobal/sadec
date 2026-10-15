@@ -25,62 +25,84 @@ public class SplashScreenController {
     
     private static final Logger logger = LoggerFactory.getLogger(SplashScreenController.class);
 
+    // PUBLIC ENDPOINT - for Flutter app
     @GetMapping("/splash-screen")
     public ResponseEntity<?> getPublicSplashScreen() {
         try {
             Optional<SplashScreen> splash = splashScreenService.getActiveSplashScreen();
-            if (splash.isPresent() && splash.get().getImageUrl() != null) {
-                return ResponseEntity.ok(Map.of("imageUrl", splash.get().getImageUrl()));
+            
+            if (splash != null && splash.isPresent() && splash.get() != null) {
+                SplashScreen activeSplash = splash.get();
+                String imageUrl = activeSplash.getImageUrl();
+                
+                if (imageUrl != null && !imageUrl.isEmpty()) {
+                    logger.info("Returning active splash screen for user app: {}", imageUrl);
+                    return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
+                }
             }
+            
+            logger.warn("No active splash screen found for user app");
             return ResponseEntity.ok(Map.of("imageUrl", (String) null));
         } catch (Exception e) {
+            logger.error("Error getting public splash screen", e);
             return ResponseEntity.ok(Map.of("imageUrl", (String) null));
         }
     }
 
+    // ADMIN ENDPOINTS
     @PostMapping("/admin/splash-screen/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile imageFile) {
         try {
             if (imageFile == null || imageFile.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "No image file provided"));
             }
+            
             SplashScreen splash = splashScreenService.uploadSplashScreen(imageFile);
+            
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Splash screen uploaded successfully");
             response.put("imageUrl", splash.getImageUrl() != null ? splash.getImageUrl() : "");
             response.put("id", splash.getId());
-            response.put("active", splash.getActive());
+            response.put("active", splash.isActive());
             response.put("createdAt", splash.getCreatedAt());
+            
             return ResponseEntity.ok(response);
         } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to upload image: " + e.getMessage()));
+            logger.error("Failed to upload splash screen image", e);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Failed to upload image: " + e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Unexpected error: " + e.getMessage()));
+            logger.error("Unexpected error during splash screen upload", e);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Unexpected error: " + e.getMessage()));
         }
     }
 
-    // RESTORED: This loads the big "CURRENTLY ACTIVE" preview box
     @GetMapping("/admin/splash-screen")
     public ResponseEntity<?> getActiveSplashScreen() {
         try {
             Optional<SplashScreen> splash = splashScreenService.getActiveSplashScreen();
+            
             Map<String, Object> response = new HashMap<>();
             
-            if (splash.isPresent()) {
+            if (splash != null && splash.isPresent() && splash.get() != null) {
                 SplashScreen activeSplash = splash.get();
                 response.put("hasActive", true);
                 response.put("imageUrl", activeSplash.getImageUrl() != null ? activeSplash.getImageUrl() : "");
                 response.put("id", activeSplash.getId());
-                response.put("active", activeSplash.getActive());
+                response.put("active", activeSplash.isActive());
                 response.put("createdAt", activeSplash.getCreatedAt());
             } else {
                 response.put("hasActive", false);
                 response.put("imageUrl", null);
                 response.put("message", "No active splash screen found");
             }
+            
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve splash screen: " + e.getMessage()));
+            logger.error("Error getting active splash screen", e);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Failed to retrieve splash screen: " + e.getMessage()));
         }
     }
 
@@ -88,79 +110,73 @@ public class SplashScreenController {
     public ResponseEntity<?> getAllSplashScreens() {
         try {
             List<SplashScreen> splashScreens = splashScreenService.getAllSplashScreens();
-            if (splashScreens == null) return ResponseEntity.ok(List.of());
             
-            List<Map<String, Object>> safeResponse = splashScreens.stream().map(screen -> {
-                Map<String, Object> item = new HashMap<>();
-                item.put("id", screen.getId());
-                item.put("imageUrl", screen.getImageUrl() != null ? screen.getImageUrl() : "");
-                item.put("active", screen.getActive());
-                item.put("createdAt", screen.getCreatedAt());
-                return item;
-            }).collect(Collectors.toList());
+            if (splashScreens == null) {
+                return ResponseEntity.ok(List.of());
+            }
+            
+            List<Map<String, Object>> safeResponse = splashScreens.stream()
+                .map(screen -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", screen.getId());
+                    item.put("imageUrl", screen.getImageUrl() != null ? screen.getImageUrl() : "");
+                    item.put("active", screen.isActive());
+                    item.put("createdAt", screen.getCreatedAt());
+                    return item;
+                })
+                .collect(Collectors.toList());
+            
             return ResponseEntity.ok(safeResponse);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve splash screens: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping("/admin/splash-screen/deleted")
-    public ResponseEntity<?> getDeletedSplashScreens() {
-        try {
-            List<SplashScreen> deletedScreens = splashScreenService.getDeletedSplashScreens();
-            if (deletedScreens == null) return ResponseEntity.ok(List.of());
-            
-            List<Map<String, Object>> safeResponse = deletedScreens.stream().map(screen -> {
-                Map<String, Object> item = new HashMap<>();
-                item.put("id", screen.getId());
-                item.put("imageUrl", screen.getImageUrl() != null ? screen.getImageUrl() : "");
-                item.put("active", screen.getActive());
-                item.put("createdAt", screen.getCreatedAt());
-                item.put("deletedAt", screen.getDeletedAt());
-                return item;
-            }).collect(Collectors.toList());
-            return ResponseEntity.ok(safeResponse);
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve deleted splash screens: " + e.getMessage()));
+            logger.error("Error getting all splash screens", e);
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Failed to retrieve splash screens: " + e.getMessage()));
         }
     }
 
     @DeleteMapping("/admin/splash-screen/{id}")
     public ResponseEntity<?> deleteSplashScreen(@PathVariable Long id) {
         try {
-            if (id == null || id <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
-            splashScreenService.moveToBin(id);
-            return ResponseEntity.ok(Map.of("message", "Splash screen moved to Recycle Bin", "id", id));
+            if (id == null || id <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
+            }
+            
+            splashScreenService.deleteSplashScreen(id);
+            return ResponseEntity.ok(Map.of(
+                "message", "Splash screen deleted successfully",
+                "id", id
+            ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Failed to move to bin: " + e.getMessage()));
-        }
-    }
-
-    @DeleteMapping("/admin/splash-screen/{id}/permanent")
-    public ResponseEntity<?> permanentDeleteSplashScreen(@PathVariable Long id) {
-        try {
-            if (id == null || id <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
-            splashScreenService.permanentDelete(id);
-            return ResponseEntity.ok(Map.of("message", "Splash screen permanently deleted", "id", id));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Failed to permanently delete: " + e.getMessage()));
+            logger.error("Error deleting splash screen with id: {}", id, e);
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Failed to delete splash screen: " + e.getMessage()));
         }
     }
 
     @PostMapping("/admin/splash-screen/{id}/activate")
     public ResponseEntity<?> activateSplashScreen(@PathVariable Long id) {
         try {
-            if (id == null || id <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
+            if (id == null || id <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
+            }
+            
             SplashScreen splash = splashScreenService.setActiveSplashScreen(id);
+            
+            if (splash == null) {
+                return ResponseEntity.notFound().build();
+            }
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Splash screen activated successfully");
             response.put("imageUrl", splash.getImageUrl() != null ? splash.getImageUrl() : "");
             response.put("id", splash.getId());
             response.put("active", true);
+            
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Failed to activate splash screen: " + e.getMessage()));
+            logger.error("Error activating splash screen with id: {}", id, e);
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Failed to activate splash screen: " + e.getMessage()));
         }
     }
 }
