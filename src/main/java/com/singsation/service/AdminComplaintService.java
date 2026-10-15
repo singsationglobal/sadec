@@ -5,8 +5,10 @@ import com.singsation.repository.ComplaintRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 public class AdminComplaintService {
@@ -14,27 +16,53 @@ public class AdminComplaintService {
     @Autowired
     private ComplaintRepository complaintRepository;
 
-    public Page<Complaint> getAllComplaints(@NonNull Pageable pageable, String status) {
+    public Page<Complaint> getComplaints(Pageable pageable, String status) {
         if (status != null && !status.isEmpty()) {
-            return complaintRepository.findByStatus(status, pageable);
+            return complaintRepository.findByStatusAndIsDeletedFalse(status, pageable);
         }
-        return complaintRepository.findAll(pageable);
+        return complaintRepository.findByIsDeletedFalse(pageable);
     }
 
-    public Complaint getComplaintById(@NonNull Long id) {
-        return complaintRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Complaint not found"));
+    // ✅ NEW: Get only soft-deleted items
+    public Page<Complaint> getDeletedComplaints(Pageable pageable) {
+        return complaintRepository.findByIsDeletedTrue(pageable);
     }
-    
-    public Complaint replyToComplaint(@NonNull Long id, String adminReply, String status) {
-        Complaint complaint = getComplaintById(id);
+
+    public Complaint replyToComplaint(Long id, String adminReply, String status) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
         complaint.setAdminReply(adminReply);
         complaint.setStatus(status);
-        complaint.setUpdatedAt(java.time.LocalDateTime.now());
+        complaint.setUpdatedAt(LocalDateTime.now());
         return complaintRepository.save(complaint);
     }
-    
-    public long getTotalComplaintsCount() {
-        return complaintRepository.count();
+
+    // ✅ NEW: Soft Delete
+    @Transactional
+    public void moveToBin(Long id) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        complaint.setIsDeleted(true);
+        complaint.setDeletedAt(LocalDateTime.now());
+        complaintRepository.save(complaint);
+    }
+
+    // ✅ NEW: Restore
+    @Transactional
+    public void restoreFromBin(Long id) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        complaint.setIsDeleted(false);
+        complaint.setDeletedAt(null);
+        complaintRepository.save(complaint);
+    }
+
+    // ✅ NEW: Permanent Delete
+    @Transactional
+    public void permanentDelete(Long id) {
+        if (!complaintRepository.existsById(id)) {
+            throw new RuntimeException("Complaint not found");
+        }
+        complaintRepository.deleteById(id);
     }
 }
