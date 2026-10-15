@@ -16,11 +16,12 @@ public class AdminComplaintService {
     @Autowired
     private ComplaintRepository complaintRepository;
 
+    // ✅ UPDATED: Uses the filtered query
     public Page<Complaint> getComplaints(Pageable pageable, String status) {
         if (status != null && !status.isEmpty()) {
-            return complaintRepository.findByStatusAndIsDeletedFalse(status, pageable);
+            return complaintRepository.findUserComplaintsByStatus(status, pageable);
         }
-        return complaintRepository.findByIsDeletedFalse(pageable);
+        return complaintRepository.findUserComplaints(pageable);
     }
 
     public Page<Complaint> getDeletedComplaints(Pageable pageable) {
@@ -41,7 +42,7 @@ public class AdminComplaintService {
     public void moveToBin(Long id) {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
-        complaint.setDeleted(true); // ✅ Correct setter name
+        complaint.setDeleted(true);
         complaint.setDeletedAt(LocalDateTime.now());
         complaintRepository.save(complaint);
     }
@@ -50,7 +51,7 @@ public class AdminComplaintService {
     public void restoreFromBin(Long id) {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
-        complaint.setDeleted(false); // ✅ Correct setter name
+        complaint.setDeleted(false);
         complaint.setDeletedAt(null);
         complaintRepository.save(complaint);
     }
