@@ -27,7 +27,6 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String adminReply;
     
-    // ✅ ADDED: Matches your database schema exactly
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
     
@@ -49,14 +48,10 @@ public class Complaint {
     public void setStatus(String status) { this.status = status; }
     public String getAdminReply() { return adminReply; }
     public void setAdminReply(String adminReply) { this.adminReply = adminReply; }
-    
-    // ✅ ADDED: Correct Java setter name for 'isDeleted' is 'setDeleted'
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
-    
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
-    
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
