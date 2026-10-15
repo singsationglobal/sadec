@@ -2,15 +2,11 @@ package com.singsation.repository;
 
 import com.singsation.model.WinnerAnnouncement;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import java.util.List;
-import java.util.Optional;
 
+@Repository
 public interface WinnerAnnouncementRepository extends JpaRepository<WinnerAnnouncement, Long> {
-    
-    // ✅ UPDATED: Only find active winners that are NOT deleted
-    Optional<WinnerAnnouncement> findByCategoryAndIsActiveTrueAndIsDeletedFalse(String category);
     List<WinnerAnnouncement> findByIsActiveTrueAndIsDeletedFalseOrderByAnnouncedAtDesc();
-    
-    // ✅ NEW: Fetch deleted winners for the Recycle Bin
     List<WinnerAnnouncement> findByIsDeletedTrueOrderByDeletedAtDesc();
 }
