@@ -36,7 +36,6 @@ public class AdminComplaintController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ NEW: Get soft-deleted complaints (The Bin)
     @GetMapping("/bin")
     public ResponseEntity<?> getDeletedComplaints(
             @RequestParam(defaultValue = "0") int page,
@@ -61,7 +60,6 @@ public class AdminComplaintController {
         return ResponseEntity.ok(updated);
     }
 
-    // ✅ NEW: Soft Delete (Moves to Bin)
     @PostMapping("/{id}/bin")
     public ResponseEntity<?> moveToBin(@PathVariable Long id) {
         try {
@@ -72,7 +70,6 @@ public class AdminComplaintController {
         }
     }
 
-    // ✅ NEW: Restore from Bin
     @PostMapping("/{id}/restore")
     public ResponseEntity<?> restoreFromBin(@PathVariable Long id) {
         try {
@@ -83,7 +80,6 @@ public class AdminComplaintController {
         }
     }
 
-    // ✅ NEW: Permanent Delete (Requires confirmation on frontend)
     @DeleteMapping("/{id}/permanent")
     public ResponseEntity<?> permanentDelete(@PathVariable Long id) {
         try {
