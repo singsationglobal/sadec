@@ -14,10 +14,10 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByUserId(Long userId);
     List<Complaint> findByUserIdOrderByCreatedAtDesc(Long userId);
     
-    // ✅ UPDATED: Added IsDeletedFalse to ensure active complaints don't show deleted ones
     Page<Complaint> findByStatusAndIsDeletedFalse(String status, Pageable pageable);
     Page<Complaint> findByIsDeletedFalse(Pageable pageable);
     
-    // ✅ NEW: For the Bin
+    // ✅ ADDED: For the Recycle Bin
     Page<Complaint> findByIsDeletedTrue(Pageable pageable);
+    long countByIsDeletedFalse();
 }
