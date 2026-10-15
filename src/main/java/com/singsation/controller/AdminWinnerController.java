@@ -6,7 +6,7 @@ import com.singsation.service.AdminWinnerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -17,12 +17,12 @@ public class AdminWinnerController {
     private AdminWinnerService adminWinnerService;
 
     @GetMapping("/active")
-    public ResponseEntity<?> getActiveWinners() {
+    public ResponseEntity<List<WinnerAnnouncement>> getActiveWinners() {
         return ResponseEntity.ok(adminWinnerService.getActiveWinners());
     }
 
     @GetMapping("/deleted")
-    public ResponseEntity<?> getDeletedWinners() {
+    public ResponseEntity<List<WinnerAnnouncement>> getDeletedWinners() {
         return ResponseEntity.ok(adminWinnerService.getDeletedWinners());
     }
 
@@ -30,26 +30,22 @@ public class AdminWinnerController {
     public ResponseEntity<?> announceWinner(@RequestBody Map<String, Object> payload) {
         try {
             WinnerAnnouncement announcement = new WinnerAnnouncement();
-            announcement.setCategory(payload.get("category") != null ? payload.get("category").toString() : "");
-            announcement.setWinnerName(payload.get("winnerName") != null ? payload.get("winnerName").toString() : "");
-            announcement.setWinnerUserid(payload.get("winnerUserid") != null ? payload.get("winnerUserid").toString() : "");
-            
+            announcement.setCategory(payload.getOrDefault("category", "ADULTS").toString());
+            announcement.setWinnerName(payload.getOrDefault("winnerName", "Unknown").toString());
+            announcement.setWinnerUserid(payload.getOrDefault("winnerUserid", "Unknown").toString());
             if (payload.get("winnerAge") != null) {
                 announcement.setWinnerAge(Integer.parseInt(payload.get("winnerAge").toString()));
             }
-            
             announcement.setProvince(payload.get("province") != null ? payload.get("province").toString() : null);
             announcement.setMessage(payload.get("message") != null ? payload.get("message").toString() : null);
             
-            // Prevents database NOT NULL crash
             Admin admin = new Admin();
             admin.setId(1L);
             announcement.setAnnouncedBy(admin);
 
             return ResponseEntity.ok(adminWinnerService.announceWinner(announcement));
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to announce: " + e.getMessage()));
         }
     }
 
