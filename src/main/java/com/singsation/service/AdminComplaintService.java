@@ -7,7 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 
 @Service
@@ -16,7 +15,6 @@ public class AdminComplaintService {
     @Autowired
     private ComplaintRepository complaintRepository;
 
-    // ✅ UPDATED: Uses the filtered query
     public Page<Complaint> getComplaints(Pageable pageable, String status) {
         if (status != null && !status.isEmpty()) {
             return complaintRepository.findUserComplaintsByStatus(status, pageable);
