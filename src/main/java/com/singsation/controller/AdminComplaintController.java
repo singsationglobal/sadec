@@ -8,7 +8,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,43 +19,30 @@ public class AdminComplaintController {
     private AdminComplaintService complaintService;
 
     @GetMapping
-    public ResponseEntity<?> getComplaints(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String status) {
-        
+    public ResponseEntity<?> getComplaints(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size, @RequestParam(required = false) String status) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Complaint> complaints = complaintService.getComplaints(pageable, status);
-        
         Map<String, Object> response = new HashMap<>();
         response.put("complaints", complaints.getContent());
         response.put("totalPages", complaints.getTotalPages());
         response.put("totalElements", complaints.getTotalElements());
-        
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/bin")
-    public ResponseEntity<?> getDeletedComplaints(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        
+    public ResponseEntity<?> getDeletedComplaints(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Complaint> complaints = complaintService.getDeletedComplaints(pageable);
-        
         Map<String, Object> response = new HashMap<>();
         response.put("complaints", complaints.getContent());
         response.put("totalPages", complaints.getTotalPages());
         response.put("totalElements", complaints.getTotalElements());
-        
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{id}/reply")
     public ResponseEntity<?> replyToComplaint(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        String adminReply = request.get("adminReply");
-        String status = request.get("status");
-        Complaint updated = complaintService.replyToComplaint(id, adminReply, status);
+        Complaint updated = complaintService.replyToComplaint(id, request.get("adminReply"), request.get("status"));
         return ResponseEntity.ok(updated);
     }
 
