@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SplashScreenService {
@@ -23,28 +25,26 @@ public class SplashScreenService {
     public SplashScreen uploadSplashScreen(MultipartFile imageFile) throws IOException {
         String imageUrl = oracleStorageService.uploadSplashScreen(imageFile);
         
-        // Deactivate existing
-        List<SplashScreen> existing = splashScreenRepository.findByIsDeletedFalse();
+        // ORIGINAL WORKING LOGIC: Deactivate all existing
+        List<SplashScreen> existing = splashScreenRepository.findAll();
         for (SplashScreen s : existing) {
             s.setActive(false);
-            s.setIsActive(false);
             splashScreenRepository.save(s);
         }
         
         SplashScreen splash = new SplashScreen();
         splash.setImageUrl(imageUrl);
         splash.setActive(true);
-        splash.setIsActive(true);
         splash.setIsDeleted(false);
-        splash.setCreatedAt(LocalDateTime.now());
         return splashScreenRepository.save(splash);
     }
 
-    public SplashScreen getActiveSplashScreen() {
-        return splashScreenRepository.findByActiveTrueAndIsDeletedFalse();
+    // ORIGINAL WORKING LOGIC
+    public Optional<SplashScreen> getActiveSplashScreen() {
+        return splashScreenRepository.findByActiveTrue();
     }
 
-    public List<SplashScreen> getAllActiveSplashScreens() {
+    public List<SplashScreen> getAllSplashScreens() {
         return splashScreenRepository.findByIsDeletedFalse();
     }
 
@@ -65,18 +65,22 @@ public class SplashScreenService {
         splashScreenRepository.deleteById(id);
     }
 
+    // ORIGINAL WORKING LOGIC for activation
     @Transactional
-    public SplashScreen activateSplashScreen(Long id) {
-        List<SplashScreen> all = splashScreenRepository.findByIsDeletedFalse();
+    public SplashScreen setActiveSplashScreen(Long id) {
+        // Deactivate all
+        List<SplashScreen> all = splashScreenRepository.findAll();
         for (SplashScreen s : all) {
             s.setActive(false);
-            s.setIsActive(false);
             splashScreenRepository.save(s);
         }
-        SplashScreen selected = splashScreenRepository.findById(id).orElseThrow(() -> new RuntimeException("Not found"));
+        
+        // Activate selected
+        SplashScreen selected = splashScreenRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Splash screen not found"));
         selected.setActive(true);
-        selected.setIsActive(true);
         selected.setIsDeleted(false);
+        
         return splashScreenRepository.save(selected);
     }
 }
