@@ -7,9 +7,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "complaints")
 public class Complaint {
-    
-    @Id 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -29,7 +27,7 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String adminReply;
     
-    // ✅ ADDED: These were missing and caused the compilation errors
+    // ✅ ADDED: Matches your database schema exactly
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
     
@@ -41,23 +39,18 @@ public class Complaint {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
-    
     public String getSubject() { return subject; }
     public void setSubject(String subject) { this.subject = subject; }
-    
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
-    
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    
     public String getAdminReply() { return adminReply; }
     public void setAdminReply(String adminReply) { this.adminReply = adminReply; }
     
-    // ✅ ADDED: Getters and Setters for the soft-delete fields
+    // ✅ ADDED: Correct Java setter name for 'isDeleted' is 'setDeleted'
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
     
@@ -66,7 +59,6 @@ public class Complaint {
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
