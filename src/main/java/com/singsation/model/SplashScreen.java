@@ -10,12 +10,13 @@ public class SplashScreen {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 1000)
+    @Column(name = "image_url", nullable = false, length = 1000)
     private String imageUrl;
 
     @Column(nullable = false)
     private boolean active = true;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "is_deleted")
