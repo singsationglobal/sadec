@@ -21,25 +21,27 @@ public class SplashScreenService {
     public SplashScreen uploadSplashScreen(MultipartFile imageFile) throws IOException {
         String imageUrl = oracleStorageService.uploadSplashScreen(imageFile);
         
-        List<SplashScreen> existing = splashScreenRepository.findByIsDeletedFalse();
+        List<SplashScreen> existing = splashScreenRepository.findAll();
         for (SplashScreen s : existing) {
             s.setActive(false);
+            s.setIsActive(false);
             splashScreenRepository.save(s);
         }
         
         SplashScreen splash = new SplashScreen();
         splash.setImageUrl(imageUrl);
         splash.setActive(true);
+        splash.setIsActive(true);
         splash.setDeleted(false);
         return splashScreenRepository.save(splash);
     }
 
     public Optional<SplashScreen> getActiveSplashScreen() {
-        return splashScreenRepository.findByActiveTrueAndIsDeletedFalse();
+        return splashScreenRepository.findByActiveTrue();
     }
 
     public List<SplashScreen> getAllSplashScreens() {
-        return splashScreenRepository.findByIsDeletedFalse();
+        return splashScreenRepository.findAll();
     }
 
     public void deleteSplashScreen(Long id) {
@@ -48,24 +50,22 @@ public class SplashScreenService {
         splash.setDeleted(true);
         splash.setDeletedAt(LocalDateTime.now());
         splash.setActive(false);
+        splash.setIsActive(false);
         splashScreenRepository.save(splash);
     }
 
     public SplashScreen setActiveSplashScreen(Long id) {
-        SplashScreen selected = splashScreenRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Splash screen not found"));
-        
-        if (selected.isDeleted()) {
-            throw new RuntimeException("Cannot activate a deleted splash screen");
-        }
-
-        List<SplashScreen> all = splashScreenRepository.findByIsDeletedFalse();
+        List<SplashScreen> all = splashScreenRepository.findAll();
         for (SplashScreen s : all) {
             s.setActive(false);
+            s.setIsActive(false);
             splashScreenRepository.save(s);
         }
         
+        SplashScreen selected = splashScreenRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Splash screen not found"));
         selected.setActive(true);
+        selected.setIsActive(true);
         return splashScreenRepository.save(selected);
     }
 }
