@@ -13,6 +13,9 @@ public class SplashScreen {
     @Column(name = "image_url", nullable = false, length = 1000)
     private String imageUrl;
 
+    @Column(name = "is_active")
+    private boolean isActive = true;
+
     @Column(nullable = false)
     private boolean active = true;
 
@@ -32,6 +35,9 @@ public class SplashScreen {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public boolean getIsActive() { return isActive; }
+    public void setIsActive(boolean isActive) { this.isActive = isActive; }
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
