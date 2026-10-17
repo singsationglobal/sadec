@@ -10,20 +10,13 @@ public class SplashScreen {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "image_url", nullable = false, length = 1000)
+    @Column(nullable = false, length = 1000)
     private String imageUrl;
 
-    @Column(name = "active", nullable = false)
-    private boolean active = false;
+    @Column(nullable = false)
+    private boolean active = true;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(name = "is_deleted")
-    private boolean isDeleted = false;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 
     public SplashScreen() {}
 
@@ -38,10 +31,4 @@ public class SplashScreen {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public boolean isDeleted() { return isDeleted; }
-    public void setDeleted(boolean deleted) { this.isDeleted = deleted; }
-
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }
