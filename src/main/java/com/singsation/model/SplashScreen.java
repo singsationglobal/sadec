@@ -16,7 +16,7 @@ public class SplashScreen {
     @Column(name = "is_active")
     private boolean isActive = true;
 
-    @Column(nullable = false)
+    @Column(name = "active", nullable = false)
     private boolean active = true;
 
     @Column(name = "created_at")
