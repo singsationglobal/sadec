@@ -5,6 +5,7 @@ import com.singsation.repository.SongRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -58,7 +59,6 @@ public class AdminSongService {
         songRepository.unhideSongsBulk(ids);
     }
 
-    // ✅ ADDED: Soft delete methods
     @Transactional
     public void moveToBin(Long id) {
         Song song = getSongById(id);
@@ -88,7 +88,6 @@ public class AdminSongService {
     }
 
     public long getTotalSongsCount() {
-        // ✅ FIXED: Count ONLY non-deleted songs for accurate Dashboard stats
         return songRepository.countByIsDeletedFalse();
     }
 }
