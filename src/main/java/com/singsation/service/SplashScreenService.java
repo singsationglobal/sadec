@@ -4,68 +4,72 @@ import com.singsation.model.SplashScreen;
 import com.singsation.repository.SplashScreenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
-public class SplashScreenService {
+public class AdminSplashScreenService {
+
     @Autowired
     private SplashScreenRepository splashScreenRepository;
 
-    @Autowired
-    private OracleStorageService oracleStorageService;
-
-    public SplashScreen uploadSplashScreen(MultipartFile imageFile) throws IOException {
-        String imageUrl = oracleStorageService.uploadSplashScreen(imageFile);
-        
-        List<SplashScreen> existing = splashScreenRepository.findAll();
-        for (SplashScreen s : existing) {
-            s.setActive(false);
-            s.setIsActive(false);
-            splashScreenRepository.save(s);
-        }
-        
-        SplashScreen splash = new SplashScreen();
-        splash.setImageUrl(imageUrl);
-        splash.setActive(true);
-        splash.setIsActive(true);
-        splash.setDeleted(false);
-        return splashScreenRepository.save(splash);
-    }
-
-    public Optional<SplashScreen> getActiveSplashScreen() {
-        return splashScreenRepository.findByActiveTrue();
-    }
-
     public List<SplashScreen> getAllSplashScreens() {
-        return splashScreenRepository.findAll();
+        return splashScreenRepository.findAllActiveScreens();
     }
 
-    public void deleteSplashScreen(Long id) {
-        SplashScreen splash = splashScreenRepository.findById(id)
+    public SplashScreen getSplashScreenById(Long id) {
+        return splashScreenRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Splash screen not found"));
-        splash.setDeleted(true);
-        splash.setDeletedAt(LocalDateTime.now());
-        splash.setActive(false);
-        splash.setIsActive(false);
-        splashScreenRepository.save(splash);
     }
 
-    public SplashScreen setActiveSplashScreen(Long id) {
-        List<SplashScreen> all = splashScreenRepository.findAll();
-        for (SplashScreen s : all) {
-            s.setActive(false);
-            s.setIsActive(false);
-            splashScreenRepository.save(s);
-        }
+    public SplashScreen getActiveSplashScreen() {
+        return splashScreenRepository.findByIsActiveTrueAndIsDeletedFalse()
+            .orElse(null);
+    }
+
+    @Transactional
+    public SplashScreen createSplashScreen(SplashScreen splashScreen) {
+        splashScreen.setDeleted(false);
+        splashScreen.setActive(false); // New uploads start as inactive
+        return splashScreenRepository.save(splashScreen);
+    }
+
+    // ✅ FIXED: This ensures ONLY ONE screen is active at a time
+    @Transactional
+    public void activateSplashScreen(Long id) {
+        // Step 1: Deactivate ALL screens first
+        splashScreenRepository.deactivateAll();
         
-        SplashScreen selected = splashScreenRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Splash screen not found"));
-        selected.setActive(true);
-        selected.setIsActive(true);
-        return splashScreenRepository.save(selected);
+        // Step 2: Activate the selected screen
+        SplashScreen screen = getSplashScreenById(id);
+        screen.setActive(true);
+        screen.setIsActive(true);
+        splashScreenRepository.save(screen);
+    }
+
+    @Transactional
+    public void moveToBin(Long id) {
+        SplashScreen screen = getSplashScreenById(id);
+        screen.setDeleted(true);
+        screen.setDeletedAt(LocalDateTime.now());
+        splashScreenRepository.save(screen);
+    }
+
+    @Transactional
+    public void restoreFromBin(Long id) {
+        SplashScreen screen = getSplashScreenById(id);
+        screen.setDeleted(false);
+        screen.setDeletedAt(null);
+        splashScreenRepository.save(screen);
+    }
+
+    @Transactional
+    public void permanentDelete(Long id) {
+        splashScreenRepository.deleteById(id);
+    }
+
+    public List<SplashScreen> getDeletedSplashScreens() {
+        return splashScreenRepository.findByIsDeletedTrue();
     }
 }
