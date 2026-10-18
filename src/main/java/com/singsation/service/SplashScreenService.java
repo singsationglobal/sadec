@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class AdminSplashScreenService {
+public class SplashScreenService {
 
     @Autowired
     private SplashScreenRepository splashScreenRepository;
