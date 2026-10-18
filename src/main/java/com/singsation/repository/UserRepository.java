@@ -14,19 +14,28 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUserid(String userid);
     boolean existsByEmail(String email);
     
-    // Case-insensitive UserID search
     @Query("SELECT u FROM User u WHERE LOWER(u.userid) = LOWER(:userid)")
     Optional<User> findByUseridIgnoreCase(@Param("userid") String userid);
     
-    // NEW: Find user by their 2-way authentication contact
     Optional<User> findByAlternativeContact(String alternativeContact);
     
-    // NEW: Search users by name, surname, userid, email, or contact
-    @Query("SELECT u FROM User u WHERE " +
+    // ✅ UPDATED: Only search non-deleted users
+    @Query("SELECT u FROM User u WHERE u.isDeleted = false AND (" +
            "LOWER(u.userid) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(u.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(u.surname) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(u.contact) LIKE LOWER(CONCAT('%', :query, '%'))")
+           "LOWER(u.contact) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<User> searchUsers(@Param("query") String query, Pageable pageable);
+
+    // ✅ ADDED: Count only non-deleted users for accurate Dashboard Stats
+    long countByIsDeletedFalse();
+
+    // ✅ ADDED: Fetch only non-deleted users for the User Management screen
+    @Query("SELECT u FROM User u WHERE u.isDeleted = false")
+    Page<User> findAllActiveUsers(Pageable pageable);
+
+    // ✅ ADDED: Fetch deleted users for a potential User Recycle Bin
+    @Query("SELECT u FROM User u WHERE u.isDeleted = true")
+    Page<User> findAllDeletedUsers(Pageable pageable);
 }
