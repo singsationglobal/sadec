@@ -65,11 +65,12 @@ public class AdminUserController {
             .orElse(ResponseEntity.notFound().build());
     }
 
+    // ✅ UPDATED: Calls permanentDeleteUser instead of the old deleteUser
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable @NonNull Long id) {
-        System.out.println("=== AdminUserController.deleteUser CALLED for ID: " + id);
-        adminUserService.deleteUser(id);
-        return ResponseEntity.ok(Map.of("message", "User deleted"));
+    public ResponseEntity<?> permanentDeleteUser(@PathVariable @NonNull Long id) {
+        System.out.println("=== AdminUserController.permanentDeleteUser CALLED for ID: " + id);
+        adminUserService.permanentDeleteUser(id);
+        return ResponseEntity.ok(Map.of("message", "User permanently deleted"));
     }
 
     @PostMapping("/{id}/ban")
@@ -92,6 +93,7 @@ public class AdminUserController {
         adminUserService.resetCompetitionEntry(id);
         return ResponseEntity.ok(Map.of("message", "Competition entry reset successfully"));
     }
+
     @PostMapping("/{id}/bin")
     public ResponseEntity<?> moveToBin(@PathVariable @NonNull Long id) {
         try {
@@ -122,7 +124,6 @@ public class AdminUserController {
         }
     }
 
-    // ✅ UPDATED MESSAGE ENDPOINT: Now actually saves to the database
     @PostMapping("/{userId}/message")
     public ResponseEntity<?> sendMessageToUser(
             @PathVariable @NonNull Long userId,
