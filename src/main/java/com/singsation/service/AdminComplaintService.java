@@ -15,7 +15,6 @@ public class AdminComplaintService {
     @Autowired
     private ComplaintRepository complaintRepository;
 
-    // ✅ FIXED: Uses the new repository methods without the subject filter
     public Page<Complaint> getComplaints(Pageable pageable, String status) {
         if (status != null && !status.isEmpty()) {
             return complaintRepository.findAllByIsDeletedFalseAndStatus(status, pageable);
