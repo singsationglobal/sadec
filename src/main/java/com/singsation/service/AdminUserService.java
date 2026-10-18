@@ -25,7 +25,6 @@ public class AdminUserService {
 
     public Page<User> getAllUsers(@NonNull Pageable pageable) {
         System.out.println("=== AdminUserService.getAllUsers CALLED ===");
-        // ✅ FIXED: Only fetch non-deleted users
         Page<User> users = userRepository.findAllActiveUsers(pageable);
         System.out.println("Active users found: " + users.getTotalElements());
         return users;
@@ -36,13 +35,11 @@ public class AdminUserService {
     }
 
     public long getTotalUsersCount() {
-        // ✅ FIXED: Count ONLY non-deleted users for accurate Dashboard stats
         long count = userRepository.countByIsDeletedFalse();
         System.out.println("=== getTotalUsersCount (Active): " + count);
         return count;
     }
 
-    // ✅ ADDED: Soft Delete, Restore, and Permanent Delete for Users
     @Transactional
     public void softDeleteUser(@NonNull Long id) {
         User user = getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
@@ -89,6 +86,7 @@ public class AdminUserService {
     }
     
     public Page<User> searchUsers(@NonNull String query, @NonNull Pageable pageable) {
+        System.out.println("=== AdminUserService.searchUsers CALLED with query: " + query);
         return userRepository.searchUsers(query, pageable);
     }
 
@@ -106,5 +104,6 @@ public class AdminUserService {
         adminMessage.setUpdatedAt(LocalDateTime.now());
         
         complaintRepository.save(adminMessage);
+        System.out.println("=== Admin message saved to complaints for User ID: " + userId + " | Type: " + messageType);
     }
 }
