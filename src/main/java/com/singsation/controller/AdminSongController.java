@@ -35,7 +35,6 @@ public class AdminSongController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ ADDED: Get deleted songs for Recycle Bin
     @GetMapping("/bin")
     public ResponseEntity<?> getDeletedSongs(@RequestParam(defaultValue = "0") int page,
                                              @RequestParam(defaultValue = "20") int size) {
@@ -100,7 +99,6 @@ public class AdminSongController {
         return ResponseEntity.ok(Map.of("message", "Song visible to users"));
     }
 
-    // ✅ ADDED: Soft delete endpoints
     @PostMapping("/{id}/bin")
     public ResponseEntity<?> moveToBin(@PathVariable @NonNull Long id) {
         try {
@@ -152,3 +150,4 @@ public class AdminSongController {
             return ResponseEntity.status(500).body(Map.of("error", "Failed to unhide songs: " + e.getMessage()));
         }
     }
+} // ✅ THIS CLOSING BRACE WAS MISSING
