@@ -14,11 +14,12 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByUserId(Long userId);
     List<Complaint> findByUserIdOrderByCreatedAtDesc(Long userId);
     
-    @Query("SELECT c FROM Complaint c WHERE c.isDeleted = false AND c.subject NOT LIKE 'Message from Admin:%'")
-    Page<Complaint> findUserComplaints(Pageable pageable);
+    // ✅ FIXED: Removed the "NOT LIKE Message from Admin" filter so all complaints show in the list
+    @Query("SELECT c FROM Complaint c WHERE c.isDeleted = false")
+    Page<Complaint> findAllByIsDeletedFalse(Pageable pageable);
 
-    @Query("SELECT c FROM Complaint c WHERE c.isDeleted = false AND c.subject NOT LIKE 'Message from Admin:%' AND c.status = :status")
-    Page<Complaint> findUserComplaintsByStatus(@Param("status") String status, Pageable pageable);
+    @Query("SELECT c FROM Complaint c WHERE c.isDeleted = false AND c.status = :status")
+    Page<Complaint> findAllByIsDeletedFalseAndStatus(@Param("status") String status, Pageable pageable);
     
     Page<Complaint> findByIsDeletedTrue(Pageable pageable);
     long countByIsDeletedFalse();
