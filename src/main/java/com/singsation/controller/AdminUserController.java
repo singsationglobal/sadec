@@ -92,6 +92,35 @@ public class AdminUserController {
         adminUserService.resetCompetitionEntry(id);
         return ResponseEntity.ok(Map.of("message", "Competition entry reset successfully"));
     }
+    @PostMapping("/{id}/bin")
+    public ResponseEntity<?> moveToBin(@PathVariable @NonNull Long id) {
+        try {
+            adminUserService.softDeleteUser(id);
+            return ResponseEntity.ok(Map.of("message", "Moved to bin"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<?> restoreFromBin(@PathVariable @NonNull Long id) {
+        try {
+            adminUserService.restoreUser(id);
+            return ResponseEntity.ok(Map.of("message", "Restored successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<?> permanentDelete(@PathVariable @NonNull Long id) {
+        try {
+            adminUserService.permanentDeleteUser(id);
+            return ResponseEntity.ok(Map.of("message", "Permanently deleted"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 
     // ✅ UPDATED MESSAGE ENDPOINT: Now actually saves to the database
     @PostMapping("/{userId}/message")
