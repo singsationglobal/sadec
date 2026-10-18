@@ -2,6 +2,7 @@ package com.singsation.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -26,6 +27,13 @@ public class Song {
     @Column(name = "is_active")
     private boolean isActive = true;
 
+    // ✅ ADDED: Soft delete fields
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @OneToMany(mappedBy = "song", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Favorite> favorites;
@@ -34,6 +42,7 @@ public class Song {
     @JsonIgnore
     private List<Payment> payments;
 
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
@@ -46,6 +55,13 @@ public class Song {
     public void setVideo(String video) { this.video = video; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    
+    // ✅ NEW Getters and Setters
+    public boolean isDeleted() { return isDeleted; }
+    public void setDeleted(boolean deleted) { isDeleted = deleted; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
     public List<Favorite> getFavorites() { return favorites; }
     public void setFavorites(List<Favorite> favorites) { this.favorites = favorites; }
     public List<Payment> getPayments() { return payments; }
