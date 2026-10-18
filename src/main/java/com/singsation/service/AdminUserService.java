@@ -25,8 +25,9 @@ public class AdminUserService {
 
     public Page<User> getAllUsers(@NonNull Pageable pageable) {
         System.out.println("=== AdminUserService.getAllUsers CALLED ===");
-        Page<User> users = userRepository.findAll(pageable);
-        System.out.println("Users found: " + users.getTotalElements());
+        // ✅ FIXED: Only fetch non-deleted users
+        Page<User> users = userRepository.findAllActiveUsers(pageable);
+        System.out.println("Active users found: " + users.getTotalElements());
         return users;
     }
 
@@ -35,13 +36,34 @@ public class AdminUserService {
     }
 
     public long getTotalUsersCount() {
-        long count = userRepository.count();
-        System.out.println("=== getTotalUsersCount: " + count);
+        // ✅ FIXED: Count ONLY non-deleted users for accurate Dashboard stats
+        long count = userRepository.countByIsDeletedFalse();
+        System.out.println("=== getTotalUsersCount (Active): " + count);
         return count;
     }
 
+    // ✅ ADDED: Soft Delete, Restore, and Permanent Delete for Users
     @Transactional
-    public void deleteUser(@NonNull Long id) {
+    public void softDeleteUser(@NonNull Long id) {
+        User user = getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void restoreUser(@NonNull Long id) {
+        User user = getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setDeleted(false);
+        user.setDeletedAt(null);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void permanentDeleteUser(@NonNull Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found");
+        }
         userRepository.deleteById(id);
     }
 
@@ -64,16 +86,12 @@ public class AdminUserService {
         User user = getUserById(id).orElseThrow(() -> new RuntimeException("User not found"));
         user.setHasCompletedEntry(false);
         userRepository.save(user);
-        System.out.println("Reset competition entry for user: " + user.getEmail());
     }
     
     public Page<User> searchUsers(@NonNull String query, @NonNull Pageable pageable) {
-        System.out.println("=== AdminUserService.searchUsers CALLED with query: " + query);
         return userRepository.searchUsers(query, pageable);
     }
 
-    // ✅ FIXED: Removed setIsDeleted to prevent compilation error. 
-    // The database defaults 'is_deleted' to 0 automatically.
     @Transactional
     public void sendMessageToUser(@NonNull Long userId, @NonNull String messageType, @NonNull String messageContent) {
         User user = getUserById(userId).orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
@@ -82,15 +100,11 @@ public class AdminUserService {
         adminMessage.setUser(user);
         adminMessage.setSubject("Message from Admin: " + messageType);
         adminMessage.setMessage(messageContent);
-        adminMessage.setStatus("OPEN"); // Shows as a new ticket for the user
-        adminMessage.setAdminReply(null); // User can reply to this later
-        
-        // Note: created_at and updated_at are often handled by @CreationTimestamp/@UpdateTimestamp 
-        // or DB defaults, but we set them explicitly just in case your model requires it.
+        adminMessage.setStatus("OPEN");
+        adminMessage.setAdminReply(null);
         adminMessage.setCreatedAt(LocalDateTime.now());
         adminMessage.setUpdatedAt(LocalDateTime.now());
         
         complaintRepository.save(adminMessage);
-        System.out.println("=== Admin message saved to complaints for User ID: " + userId + " | Type: " + messageType);
     }
 }
