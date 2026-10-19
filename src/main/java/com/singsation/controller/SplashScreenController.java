@@ -23,7 +23,6 @@ public class SplashScreenController {
 
     private static final Logger logger = LoggerFactory.getLogger(SplashScreenController.class);
 
-    // PUBLIC ENDPOINT
     @GetMapping("/splash-screen")
     public ResponseEntity<?> getPublicSplashScreen() {
         try {
@@ -41,7 +40,6 @@ public class SplashScreenController {
         }
     }
 
-    // ADMIN ENDPOINTS
     @PostMapping("/admin/splash-screen/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile imageFile) {
         try {
@@ -90,9 +88,7 @@ public class SplashScreenController {
     public ResponseEntity<?> getAllSplashScreens() {
         try {
             List<SplashScreen> splashScreens = splashScreenService.getAllSplashScreens();
-            if (splashScreens == null) {
-                return ResponseEntity.ok(List.of());
-            }
+            if (splashScreens == null) return ResponseEntity.ok(List.of());
             List<Map<String, Object>> safeResponse = splashScreens.stream()
                 .map(screen -> {
                     Map<String, Object> item = new HashMap<>();
@@ -101,8 +97,7 @@ public class SplashScreenController {
                     item.put("active", screen.isActive());
                     item.put("createdAt", screen.getCreatedAt());
                     return item;
-                })
-                .collect(Collectors.toList());
+                }).collect(Collectors.toList());
             return ResponseEntity.ok(safeResponse);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve splash screens: " + e.getMessage()));
@@ -112,9 +107,7 @@ public class SplashScreenController {
     @DeleteMapping("/admin/splash-screen/{id}")
     public ResponseEntity<?> deleteSplashScreen(@PathVariable Long id) {
         try {
-            if (id == null || id <= 0) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
-            }
+            if (id == null || id <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
             splashScreenService.deleteSplashScreen(id);
             return ResponseEntity.ok(Map.of("message", "Splash screen moved to recycle bin", "id", id));
         } catch (Exception e) {
@@ -125,13 +118,9 @@ public class SplashScreenController {
     @PostMapping("/admin/splash-screen/{id}/activate")
     public ResponseEntity<?> activateSplashScreen(@PathVariable Long id) {
         try {
-            if (id == null || id <= 0) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
-            }
+            if (id == null || id <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
             SplashScreen splash = splashScreenService.setActiveSplashScreen(id);
-            if (splash == null) {
-                return ResponseEntity.notFound().build();
-            }
+            if (splash == null) return ResponseEntity.notFound().build();
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Splash screen activated successfully");
             response.put("imageUrl", splash.getImageUrl() != null ? splash.getImageUrl() : "");
@@ -143,7 +132,6 @@ public class SplashScreenController {
         }
     }
 
-    // RECYCLE BIN ENDPOINTS
     @GetMapping("/admin/splash-screen/deleted")
     public ResponseEntity<?> getDeletedSplashScreens() {
         try {
@@ -155,8 +143,7 @@ public class SplashScreenController {
                     item.put("imageUrl", screen.getImageUrl() != null ? screen.getImageUrl() : "");
                     item.put("deletedAt", screen.getDeletedAt());
                     return item;
-                })
-                .collect(Collectors.toList());
+                }).collect(Collectors.toList());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve deleted screens: " + e.getMessage()));
@@ -166,9 +153,7 @@ public class SplashScreenController {
     @PostMapping("/admin/splash-screen/{id}/bin")
     public ResponseEntity<?> moveToBin(@PathVariable Long id) {
         try {
-            if (id == null || id <= 0) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
-            }
+            if (id == null || id <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
             splashScreenService.deleteSplashScreen(id);
             return ResponseEntity.ok(Map.of("message", "Moved to recycle bin", "id", id));
         } catch (Exception e) {
@@ -179,9 +164,7 @@ public class SplashScreenController {
     @PostMapping("/admin/splash-screen/{id}/restore")
     public ResponseEntity<?> restoreFromBin(@PathVariable Long id) {
         try {
-            if (id == null || id <= 0) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
-            }
+            if (id == null || id <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
             splashScreenService.restoreFromBin(id);
             return ResponseEntity.ok(Map.of("message", "Splash screen restored successfully", "id", id));
         } catch (Exception e) {
@@ -192,9 +175,7 @@ public class SplashScreenController {
     @DeleteMapping("/admin/splash-screen/{id}/permanent")
     public ResponseEntity<?> permanentDelete(@PathVariable Long id) {
         try {
-            if (id == null || id <= 0) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
-            }
+            if (id == null || id <= 0) return ResponseEntity.badRequest().body(Map.of("error", "Invalid splash screen ID"));
             splashScreenService.permanentDelete(id);
             return ResponseEntity.ok(Map.of("message", "Splash screen permanently deleted", "id", id));
         } catch (Exception e) {
