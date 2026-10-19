@@ -23,22 +23,27 @@ public class SplashScreenService {
     private GoogleCloudStorageService googleCloudStorageService;
 
     @Value("${cloud.provider:oracle}")
-    private String cloudProvider;
+    private String defaultCloudProvider;
 
-    public SplashScreen uploadSplashScreen(MultipartFile imageFile) throws IOException {
-        // Toggle between Oracle and Google Cloud
+    public SplashScreen uploadSplashScreen(MultipartFile imageFile, String cloudProvider) throws IOException {
+        // Use the provider passed from the Flutter app, or fallback to default
+        String provider = (cloudProvider != null && !cloudProvider.isEmpty()) ? cloudProvider : defaultCloudProvider;
+        
         String imageUrl;
-        if ("google".equalsIgnoreCase(cloudProvider)) {
+        if ("google".equalsIgnoreCase(provider)) {
             imageUrl = googleCloudStorageService.uploadSplashScreen(imageFile);
         } else {
             imageUrl = oracleStorageService.uploadSplashScreen(imageFile);
         }
 
+        // Deactivate all existing splash screens
         List<SplashScreen> existing = splashScreenRepository.findAll();
         for (SplashScreen s : existing) {
             s.setActive(false);
             splashScreenRepository.save(s);
         }
+
+        // Create new active splash screen
         SplashScreen splash = new SplashScreen();
         splash.setImageUrl(imageUrl);
         splash.setActive(true);
