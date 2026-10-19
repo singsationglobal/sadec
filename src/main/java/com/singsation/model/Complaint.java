@@ -32,6 +32,10 @@ public class Complaint {
     
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // ✅ ADDED: User-side archive field
+    @Column(name = "user_archived", nullable = false)
+    private boolean userArchived = false;
     
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
@@ -52,6 +56,11 @@ public class Complaint {
     public void setDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    
+    // ✅ ADDED: User archive getters/setters
+    public boolean isUserArchived() { return userArchived; }
+    public void setUserArchived(boolean userArchived) { this.userArchived = userArchived; }
+    
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
