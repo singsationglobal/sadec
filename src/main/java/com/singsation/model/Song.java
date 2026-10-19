@@ -34,6 +34,10 @@ public class Song {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    // ✅ ADDED: Cover Image Field
+    @Column(name = "cover_image_url", length = 500)
+    private String coverImageUrl;
+
     @OneToMany(mappedBy = "song", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Favorite> favorites;
@@ -61,6 +65,10 @@ public class Song {
     public void setDeleted(boolean deleted) { isDeleted = deleted; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    // ✅ ADDED: Cover Image Getters and Setters
+    public String getCoverImageUrl() { return coverImageUrl; }
+    public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl; }
 
     public List<Favorite> getFavorites() { return favorites; }
     public void setFavorites(List<Favorite> favorites) { this.favorites = favorites; }
