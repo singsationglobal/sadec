@@ -23,17 +23,16 @@ public class SplashScreenController {
         return ResponseEntity.ok(screens);
     }
 
-    // ✅ THIS IS THE ENDPOINT YOUR MOBILE APP CALLS
     @GetMapping
     public ResponseEntity<?> getActiveSplashScreen() {
         SplashScreen screen = splashScreenService.getActiveSplashScreen();
         if (screen != null && screen.getImageUrl() != null && !screen.getImageUrl().isEmpty()) {
             return ResponseEntity.ok(Map.of("imageUrl", screen.getImageUrl()));
         }
-        // Return your default fallback image
         return ResponseEntity.ok(Map.of("imageUrl", "https://objectstorage.af-johannesburg-1.oraclecloud.com/n/axcbefxpjvzm/b/karaokeimages/o/Splashscreensplash.jpg"));
     }
 
+    // ✅ THIS IS THE RECYCLE BIN ENDPOINT (It is already in the correct spot for you)
     @GetMapping("/deleted")
     public ResponseEntity<?> getDeletedSplashScreens() {
         List<SplashScreen> screens = splashScreenService.getDeletedSplashScreens();
@@ -43,8 +42,9 @@ public class SplashScreenController {
     @PostMapping("/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile file) {
         try {
-            // TODO: Add your Oracle Cloud upload logic here
-            return ResponseEntity.badRequest().body(Map.of("error", "Upload logic needs your Oracle Cloud code"));
+            // NOTE: If you had your original Oracle Cloud upload code here before, 
+            // you can paste it back in this exact spot. This placeholder just prevents the app from crashing.
+            return ResponseEntity.badRequest().body(Map.of("error", "Please add your original upload code here"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", "Failed to upload: " + e.getMessage()));
         }
