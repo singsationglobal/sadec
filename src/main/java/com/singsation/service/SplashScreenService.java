@@ -28,7 +28,7 @@ public class SplashScreenService {
     public SplashScreen uploadSplashScreen(MultipartFile imageFile) throws IOException {
         String imageUrl;
         
-        // Switch between clouds based on Render Environment Variables
+        // Switch between clouds
         if ("google".equalsIgnoreCase(cloudProvider)) {
             imageUrl = googleCloudStorageService.uploadSplashScreen(imageFile);
         } else {
@@ -57,7 +57,7 @@ public class SplashScreenService {
         return splashScreenRepository.findAll();
     }
 
-    // Soft delete (Move to bin)
+    // Soft Delete (Move to Recycle Bin)
     public void deleteSplashScreen(Long id) {
         SplashScreen screen = splashScreenRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Splash screen not found"));
@@ -78,7 +78,7 @@ public class SplashScreenService {
         return splashScreenRepository.save(selected);
     }
 
-    // Recycle bin methods
+    // Recycle Bin Methods
     public List<SplashScreen> getDeletedSplashScreens() {
         return splashScreenRepository.findByIsDeletedTrue();
     }
