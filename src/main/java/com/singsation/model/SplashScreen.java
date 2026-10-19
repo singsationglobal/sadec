@@ -17,7 +17,7 @@ public class SplashScreen {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // ✅ ADDED: Recycle bin fields (matches your SQL dump)
+    // ✅ ADDED: Recycle bin fields
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
