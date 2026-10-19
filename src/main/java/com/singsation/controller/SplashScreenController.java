@@ -22,7 +22,7 @@ public class SplashScreenController {
 
     private static final Logger logger = LoggerFactory.getLogger(SplashScreenController.class);
 
-    // PUBLIC ENDPOINT - for Flutter app
+    // PUBLIC ENDPOINT - for Flutter app (DEVELOPER'S ORIGINAL CODE)
     @GetMapping("/splash-screen")
     public ResponseEntity<?> getPublicSplashScreen() {
         try {
@@ -43,7 +43,7 @@ public class SplashScreenController {
         }
     }
 
-    // ADMIN ENDPOINTS
+    // ADMIN ENDPOINTS (DEVELOPER'S ORIGINAL CODE)
     @PostMapping("/admin/splash-screen/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile imageFile) {
         try {
@@ -115,7 +115,7 @@ public class SplashScreenController {
         }
     }
 
-    // ✅ UPDATED: This now calls the soft delete (move to bin) method
+    // ✅ UPDATED: Now triggers the soft delete (move to bin)
     @DeleteMapping("/admin/splash-screen/{id}")
     public ResponseEntity<?> deleteSplashScreen(@PathVariable Long id) {
         try {
@@ -152,7 +152,10 @@ public class SplashScreenController {
         }
     }
 
-    // ✅ ADDED: Recycle Bin Endpoints to fix the 404 error
+    // ==========================================================
+    // ✅ ADDED: ONLY THESE 4 ENDPOINTS FOR THE RECYCLE BIN
+    // ==========================================================
+
     @GetMapping("/admin/splash-screen/deleted")
     public ResponseEntity<?> getDeletedSplashScreens() {
         try {
