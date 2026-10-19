@@ -14,14 +14,13 @@ public class SplashScreenService {
     @Autowired
     private SplashScreenRepository splashScreenRepository;
 
-    // ✅ Returns only non-deleted screens
     public List<SplashScreen> getAllSplashScreens() {
         return splashScreenRepository.findAllNonDeleted();
     }
 
-    // ✅ Uses the safe query to find the active screen
+    // ✅ FIXED: Use the correct repository method
     public SplashScreen getActiveSplashScreen() {
-        return splashScreenRepository.findAnyActiveScreen().orElse(null);
+        return splashScreenRepository.findActiveScreen().orElse(null);
     }
 
     @Transactional
