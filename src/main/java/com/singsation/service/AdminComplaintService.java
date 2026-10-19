@@ -65,4 +65,25 @@ public class AdminComplaintService {
     public long getTotalComplaintsCount() {
         return complaintRepository.countByIsDeletedFalse();
     }
+
+    // ✅ ADDED: User-side archive methods
+    @Transactional
+    public void archiveUserComplaint(Long id, Long userId) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        if (complaint.getUser().getId().equals(userId)) {
+            complaint.setUserArchived(true);
+            complaintRepository.save(complaint);
+        }
+    }
+
+    @Transactional
+    public void restoreUserComplaint(Long id, Long userId) {
+        Complaint complaint = complaintRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Complaint not found"));
+        if (complaint.getUser().getId().equals(userId)) {
+            complaint.setUserArchived(false);
+            complaintRepository.save(complaint);
+        }
+    }
 }
