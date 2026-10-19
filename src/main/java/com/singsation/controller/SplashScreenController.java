@@ -29,7 +29,8 @@ public class SplashScreenController {
         if (screen != null) {
             return ResponseEntity.ok(Map.of("imageUrl", screen.getImageUrl()));
         }
-        return ResponseEntity.ok(Map.of("imageUrl", ""));
+        // Fallback image so the box is never empty
+        return ResponseEntity.ok(Map.of("imageUrl", "https://objectstorage.af-johannesburg-1.oraclecloud.com/n/axcbefxpjvzm/b/karaokeimages/o/Splashscreensplash.jpg"));
     }
 
     @GetMapping("/deleted")
@@ -38,12 +39,19 @@ public class SplashScreenController {
         return ResponseEntity.ok(screens);
     }
 
+    // ⚠️ IMPORTANT: Paste your original Oracle Cloud upload logic here! 
+    // I cannot provide your specific cloud credentials/code.
     @PostMapping("/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile file) {
         try {
-            // Your existing file upload logic goes here. 
-            // For now, returning a placeholder to prevent build errors if you haven't implemented the cloud upload yet.
-            return ResponseEntity.ok(Map.of("imageUrl", "uploaded-url", "message", "Uploaded successfully"));
+            // TODO: PASTE YOUR ORIGINAL UPLOAD CODE HERE
+            // Example: String url = yourCloudService.upload(file);
+            // SplashScreen screen = new SplashScreen();
+            // screen.setImageUrl(url);
+            // splashScreenService.createSplashScreen(screen);
+            // return ResponseEntity.ok(Map.of("imageUrl", url));
+            
+            return ResponseEntity.badRequest().body(Map.of("error", "Upload logic missing. Please paste your original upload code here."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
