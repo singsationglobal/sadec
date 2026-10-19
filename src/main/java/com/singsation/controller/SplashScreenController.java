@@ -1,13 +1,12 @@
 package com.singsation.controller;
 
 import com.singsation.model.SplashScreen;
-import com.singsation.service.SplashScreenService; // ✅ FIXED: Changed to SplashScreenService
+import com.singsation.service.SplashScreenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +15,7 @@ import java.util.Map;
 public class SplashScreenController {
 
     @Autowired
-    private SplashScreenService splashScreenService; // ✅ FIXED: Changed to SplashScreenService
+    private SplashScreenService splashScreenService;
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllSplashScreens() {
@@ -33,11 +32,17 @@ public class SplashScreenController {
         return ResponseEntity.ok(Map.of("imageUrl", ""));
     }
 
+    @GetMapping("/deleted")
+    public ResponseEntity<?> getDeletedSplashScreens() {
+        List<SplashScreen> screens = splashScreenService.getDeletedSplashScreens();
+        return ResponseEntity.ok(screens);
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile file) {
         try {
-            // Your existing upload logic here (e.g., uploading to Oracle Cloud)
-            // For now, returning a placeholder response to prevent build errors
+            // Your existing file upload logic goes here. 
+            // For now, returning a placeholder to prevent build errors if you haven't implemented the cloud upload yet.
             return ResponseEntity.ok(Map.of("imageUrl", "uploaded-url", "message", "Uploaded successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -47,17 +52,19 @@ public class SplashScreenController {
     @PostMapping("/url")
     public ResponseEntity<?> saveSplashScreenUrl(@RequestBody Map<String, String> request) {
         try {
+            String imageUrl = request.get("imageUrl");
+            if (imageUrl == null || imageUrl.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Image URL is required"));
+            }
             SplashScreen screen = new SplashScreen();
-            screen.setImageUrl(request.get("imageUrl"));
-            screen.setActive(false); // New URLs start inactive
+            screen.setImageUrl(imageUrl);
             splashScreenService.createSplashScreen(screen);
-            return ResponseEntity.ok(Map.of("imageUrl", request.get("imageUrl")));
+            return ResponseEntity.ok(Map.of("imageUrl", imageUrl, "message", "Saved successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    // ✅ THIS IS THE KEY ENDPOINT - It now ensures only ONE is active
     @PostMapping("/{id}/activate")
     public ResponseEntity<?> activateSplashScreen(@PathVariable Long id) {
         try {
@@ -74,7 +81,7 @@ public class SplashScreenController {
             splashScreenService.moveToBin(id);
             return ResponseEntity.ok(Map.of("message", "Moved to bin"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Failed to move splash screen to bin"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to move to bin"));
         }
     }
 
