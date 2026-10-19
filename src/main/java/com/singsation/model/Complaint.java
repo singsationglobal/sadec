@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "complaints")
 public class Complaint {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,6 +27,9 @@ public class Complaint {
     
     @Column(columnDefinition = "TEXT")
     private String adminReply;
+
+    @Column(columnDefinition = "TEXT")
+    private String userReply;
     
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
@@ -33,7 +37,6 @@ public class Complaint {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    // ✅ ADDED: User-side archive field
     @Column(name = "user_archived", nullable = false)
     private boolean userArchived = false;
     
@@ -52,15 +55,14 @@ public class Complaint {
     public void setStatus(String status) { this.status = status; }
     public String getAdminReply() { return adminReply; }
     public void setAdminReply(String adminReply) { this.adminReply = adminReply; }
+    public String getUserReply() { return userReply; }
+    public void setUserReply(String userReply) { this.userReply = userReply; }
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
-    
-    // ✅ ADDED: User archive getters/setters
     public boolean isUserArchived() { return userArchived; }
     public void setUserArchived(boolean userArchived) { this.userArchived = userArchived; }
-    
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
