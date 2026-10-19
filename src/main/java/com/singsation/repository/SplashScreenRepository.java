@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface SplashScreenRepository extends JpaRepository<SplashScreen, Long> {
+    // ✅ DEVELOPER'S ORIGINAL METHOD
     Optional<SplashScreen> findByActiveTrue();
 
     // ✅ ADDED: Recycle bin queries
