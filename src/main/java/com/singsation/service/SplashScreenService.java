@@ -18,7 +18,7 @@ public class SplashScreenService {
         return splashScreenRepository.findAllNonDeleted();
     }
 
-    // ✅ FIXED: Use the correct repository method
+    // ✅ Use the fixed query
     public SplashScreen getActiveSplashScreen() {
         return splashScreenRepository.findActiveScreen().orElse(null);
     }
