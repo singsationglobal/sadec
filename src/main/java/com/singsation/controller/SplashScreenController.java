@@ -23,7 +23,7 @@ public class SplashScreenController {
 
     private static final Logger logger = LoggerFactory.getLogger(SplashScreenController.class);
 
-    // PUBLIC ENDPOINT - for Flutter app
+    // PUBLIC ENDPOINT
     @GetMapping("/splash-screen")
     public ResponseEntity<?> getPublicSplashScreen() {
         try {
@@ -32,14 +32,11 @@ public class SplashScreenController {
                 SplashScreen activeSplash = splash.get();
                 String imageUrl = activeSplash.getImageUrl();
                 if (imageUrl != null && !imageUrl.isEmpty()) {
-                    logger.info("Returning active splash screen for user app: {}", imageUrl);
                     return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
                 }
             }
-            logger.warn("No active splash screen found for user app");
             return ResponseEntity.ok(Map.of("imageUrl", (String) null));
         } catch (Exception e) {
-            logger.error("Error getting public splash screen", e);
             return ResponseEntity.ok(Map.of("imageUrl", (String) null));
         }
     }
@@ -60,10 +57,8 @@ public class SplashScreenController {
             response.put("createdAt", splash.getCreatedAt());
             return ResponseEntity.ok(response);
         } catch (IOException e) {
-            logger.error("Failed to upload splash screen image", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to upload image: " + e.getMessage()));
         } catch (Exception e) {
-            logger.error("Unexpected error during splash screen upload", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "Unexpected error: " + e.getMessage()));
         }
     }
@@ -87,7 +82,6 @@ public class SplashScreenController {
             }
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error getting active splash screen", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve splash screen: " + e.getMessage()));
         }
     }
@@ -111,7 +105,6 @@ public class SplashScreenController {
                 .collect(Collectors.toList());
             return ResponseEntity.ok(safeResponse);
         } catch (Exception e) {
-            logger.error("Error getting all splash screens", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve splash screens: " + e.getMessage()));
         }
     }
@@ -125,7 +118,6 @@ public class SplashScreenController {
             splashScreenService.deleteSplashScreen(id);
             return ResponseEntity.ok(Map.of("message", "Splash screen moved to recycle bin", "id", id));
         } catch (Exception e) {
-            logger.error("Error deleting splash screen with id: {}", id, e);
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to delete splash screen: " + e.getMessage()));
         }
     }
@@ -147,7 +139,6 @@ public class SplashScreenController {
             response.put("active", true);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error activating splash screen with id: {}", id, e);
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to activate splash screen: " + e.getMessage()));
         }
     }
@@ -168,7 +159,6 @@ public class SplashScreenController {
                 .collect(Collectors.toList());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error getting deleted splash screens", e);
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to retrieve deleted screens: " + e.getMessage()));
         }
     }
@@ -182,7 +172,6 @@ public class SplashScreenController {
             splashScreenService.deleteSplashScreen(id);
             return ResponseEntity.ok(Map.of("message", "Moved to recycle bin", "id", id));
         } catch (Exception e) {
-            logger.error("Error moving splash screen to bin with id: {}", id, e);
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to move to bin: " + e.getMessage()));
         }
     }
@@ -196,7 +185,6 @@ public class SplashScreenController {
             splashScreenService.restoreFromBin(id);
             return ResponseEntity.ok(Map.of("message", "Splash screen restored successfully", "id", id));
         } catch (Exception e) {
-            logger.error("Error restoring splash screen with id: {}", id, e);
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to restore splash screen: " + e.getMessage()));
         }
     }
@@ -210,7 +198,6 @@ public class SplashScreenController {
             splashScreenService.permanentDelete(id);
             return ResponseEntity.ok(Map.of("message", "Splash screen permanently deleted", "id", id));
         } catch (Exception e) {
-            logger.error("Error permanently deleting splash screen with id: {}", id, e);
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to permanently delete splash screen: " + e.getMessage()));
         }
     }
