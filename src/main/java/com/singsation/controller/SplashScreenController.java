@@ -1,7 +1,7 @@
 package com.singsation.controller;
 
 import com.singsation.model.SplashScreen;
-import com.singsation.service.AdminSplashScreenService;
+import com.singsation.service.SplashScreenService; // ✅ FIXED: Changed to SplashScreenService
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +16,7 @@ import java.util.Map;
 public class SplashScreenController {
 
     @Autowired
-    private AdminSplashScreenService splashScreenService;
+    private SplashScreenService splashScreenService; // ✅ FIXED: Changed to SplashScreenService
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllSplashScreens() {
@@ -36,8 +36,8 @@ public class SplashScreenController {
     @PostMapping("/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile file) {
         try {
-            // Your existing upload logic here
-            // For now, returning placeholder
+            // Your existing upload logic here (e.g., uploading to Oracle Cloud)
+            // For now, returning a placeholder response to prevent build errors
             return ResponseEntity.ok(Map.of("imageUrl", "uploaded-url", "message", "Uploaded successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
