@@ -41,12 +41,14 @@ public class SplashScreenController {
     }
 
     @PostMapping("/admin/splash-screen/upload")
-    public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile imageFile) {
+    public ResponseEntity<?> uploadSplashScreen(
+            @RequestParam("image") MultipartFile imageFile,
+            @RequestParam(value = "cloudProvider", defaultValue = "oracle") String cloudProvider) {
         try {
             if (imageFile == null || imageFile.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "No image file provided"));
             }
-            SplashScreen splash = splashScreenService.uploadSplashScreen(imageFile);
+            SplashScreen splash = splashScreenService.uploadSplashScreen(imageFile, cloudProvider);
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Splash screen uploaded successfully");
             response.put("imageUrl", splash.getImageUrl() != null ? splash.getImageUrl() : "");
