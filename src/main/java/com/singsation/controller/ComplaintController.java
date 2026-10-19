@@ -40,6 +40,7 @@ public class ComplaintController {
         dto.put("message", c.getMessage());
         dto.put("status", c.getStatus());
         dto.put("adminReply", c.getAdminReply());
+        dto.put("userReply", c.getUserReply());
         dto.put("createdAt", c.getCreatedAt());
         dto.put("updatedAt", c.getUpdatedAt());
         
@@ -132,7 +133,6 @@ public class ComplaintController {
         }
     }
 
-    // ✅ ADDED: Get archived complaints for the user
     @GetMapping("/user/{userId}/archived")
     @Transactional(readOnly = true)
     public ResponseEntity<?> getArchivedUserComplaints(@PathVariable("userId") Long userId) {
@@ -153,7 +153,6 @@ public class ComplaintController {
         }
     }
 
-    // ✅ ADDED: Archive complaint (user-side hide)
     @PostMapping("/{id}/archive")
     @Transactional
     public ResponseEntity<?> archiveUserComplaint(@PathVariable("id") Long id, @RequestParam Long userId) {
@@ -175,7 +174,6 @@ public class ComplaintController {
         }
     }
 
-    // ✅ ADDED: Restore complaint from user archive
     @PostMapping("/{id}/restore")
     @Transactional
     public ResponseEntity<?> restoreUserComplaint(@PathVariable("id") Long id, @RequestParam Long userId) {
@@ -192,6 +190,39 @@ public class ComplaintController {
             complaintRepository.save(complaint);
             
             return ResponseEntity.ok(Map.of("message", "Complaint restored"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{id}/reply")
+    @Transactional
+    public ResponseEntity<?> replyToComplaint(@PathVariable("id") Long id, @RequestBody Map<String, String> request) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            User currentUser = userRepository.findByEmail(email).orElse(null);
+            
+            Complaint complaint = complaintRepository.findById(id).orElse(null);
+            if (complaint == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            if (currentUser == null || !currentUser.getId().equals(complaint.getUser().getId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+            }
+            
+            String userReply = request.get("userReply");
+            if (userReply == null || userReply.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Reply message is required"));
+            }
+            
+            complaint.setUserReply(userReply.trim());
+            complaint.setStatus("IN_PROGRESS");
+            complaint.setUpdatedAt(LocalDateTime.now());
+            complaintRepository.save(complaint);
+            
+            return ResponseEntity.ok(Map.of("message", "Reply sent successfully"));
+            
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
