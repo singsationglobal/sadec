@@ -14,18 +14,14 @@ public class SplashScreenService {
     @Autowired
     private SplashScreenRepository splashScreenRepository;
 
+    // ✅ Returns only non-deleted screens
     public List<SplashScreen> getAllSplashScreens() {
-        return splashScreenRepository.findAll();
+        return splashScreenRepository.findAllNonDeleted();
     }
 
-    public SplashScreen getSplashScreenById(Long id) {
-        return splashScreenRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Splash screen not found"));
-    }
-
+    // ✅ Uses the safe query to find the active screen
     public SplashScreen getActiveSplashScreen() {
-        return splashScreenRepository.findByIsActiveTrueAndIsDeletedFalse()
-            .orElse(null);
+        return splashScreenRepository.findAnyActiveScreen().orElse(null);
     }
 
     @Transactional
@@ -38,15 +34,9 @@ public class SplashScreenService {
 
     @Transactional
     public void activateSplashScreen(Long id) {
-        // Deactivate ALL screens first so only ONE is active
-        List<SplashScreen> allScreens = splashScreenRepository.findAll();
-        for (SplashScreen screen : allScreens) {
-            screen.setActive(false);
-            screen.setIsActive(false);
-            splashScreenRepository.save(screen);
-        }
-        // Activate the selected screen
-        SplashScreen screen = getSplashScreenById(id);
+        splashScreenRepository.deactivateAll();
+        SplashScreen screen = splashScreenRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Splash screen not found"));
         screen.setActive(true);
         screen.setIsActive(true);
         splashScreenRepository.save(screen);
@@ -54,7 +44,8 @@ public class SplashScreenService {
 
     @Transactional
     public void moveToBin(Long id) {
-        SplashScreen screen = getSplashScreenById(id);
+        SplashScreen screen = splashScreenRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Splash screen not found"));
         screen.setDeleted(true);
         screen.setDeletedAt(LocalDateTime.now());
         splashScreenRepository.save(screen);
@@ -62,7 +53,8 @@ public class SplashScreenService {
 
     @Transactional
     public void restoreFromBin(Long id) {
-        SplashScreen screen = getSplashScreenById(id);
+        SplashScreen screen = splashScreenRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Splash screen not found"));
         screen.setDeleted(false);
         screen.setDeletedAt(null);
         splashScreenRepository.save(screen);
