@@ -86,7 +86,6 @@ public class ComplaintController {
             
             Complaint saved = complaintRepository.save(complaint);
             
-            // ✅ Log complaint submission activity
             HttpServletRequest httpRequest = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
             userActivityLogService.logActivity(user, "COMPLAINT_SUBMIT", 
                 "Submitted complaint: " + subject.trim(), httpRequest);
@@ -128,6 +127,71 @@ public class ComplaintController {
                 
             return ResponseEntity.ok(dtoList);
             
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ✅ ADDED: Get archived complaints for the user
+    @GetMapping("/user/{userId}/archived")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getArchivedUserComplaints(@PathVariable("userId") Long userId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findByEmail(email).orElse(null);
+            
+            if (user == null || !user.getId().equals(userId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+            }
+            
+            List<Complaint> complaints = complaintRepository.findArchivedByUserId(userId);
+            List<Map<String, Object>> dtoList = complaints.stream().map(this::toComplaintDto).collect(Collectors.toList());
+            return ResponseEntity.ok(dtoList);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ✅ ADDED: Archive complaint (user-side hide)
+    @PostMapping("/{id}/archive")
+    @Transactional
+    public ResponseEntity<?> archiveUserComplaint(@PathVariable("id") Long id, @RequestParam Long userId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findByEmail(email).orElse(null);
+            
+            if (user == null || !user.getId().equals(userId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+            }
+            
+            Complaint complaint = complaintRepository.findById(id).orElseThrow(() -> new RuntimeException("Complaint not found"));
+            complaint.setUserArchived(true);
+            complaintRepository.save(complaint);
+            
+            return ResponseEntity.ok(Map.of("message", "Complaint archived"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ✅ ADDED: Restore complaint from user archive
+    @PostMapping("/{id}/restore")
+    @Transactional
+    public ResponseEntity<?> restoreUserComplaint(@PathVariable("id") Long id, @RequestParam Long userId) {
+        try {
+            String email = SecurityContextHolder.getContext().getAuthentication().getName();
+            User user = userRepository.findByEmail(email).orElse(null);
+            
+            if (user == null || !user.getId().equals(userId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+            }
+            
+            Complaint complaint = complaintRepository.findById(id).orElseThrow(() -> new RuntimeException("Complaint not found"));
+            complaint.setUserArchived(false);
+            complaintRepository.save(complaint);
+            
+            return ResponseEntity.ok(Map.of("message", "Complaint restored"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
