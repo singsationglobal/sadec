@@ -3,6 +3,7 @@ package com.singsation.controller;
 import com.singsation.model.Song;
 import com.singsation.repository.SongRepository;
 import com.singsation.service.OracleStorageService;
+import com.singsation.service.GoogleCloudStorageService; // ✅ ADDED
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,17 +21,22 @@ public class SongFileUploadController {
     private OracleStorageService oracleStorageService;
 
     @Autowired
+    private GoogleCloudStorageService googleCloudStorageService; // ✅ ADDED
+
+    @Autowired
     private SongRepository songRepository;
 
     /**
-     * Upload audio and video files for a song to Oracle buckets
+     * Upload audio, video, and cover image files for a song
      * POST /api/admin/songs/{id}/upload-files
      */
     @PostMapping("/{id}/upload-files")
     public ResponseEntity<?> uploadSongFiles(
             @PathVariable Long id,
             @RequestParam(value = "audioFile", required = false) MultipartFile audioFile,
-            @RequestParam(value = "videoFile", required = false) MultipartFile videoFile) {
+            @RequestParam(value = "videoFile", required = false) MultipartFile videoFile,
+            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage, // ✅ ADDED
+            @RequestParam(value = "cloudProvider", defaultValue = "oracle") String cloudProvider) { // ✅ ADDED
         
         try {
             Song song = songRepository.findById(id)
@@ -39,15 +45,37 @@ public class SongFileUploadController {
             Map<String, String> uploadedFiles = new HashMap<>();
             
             if (audioFile != null && !audioFile.isEmpty()) {
-                String audioUrl = oracleStorageService.uploadSongAudio(audioFile);
+                String audioUrl;
+                if ("google".equalsIgnoreCase(cloudProvider)) {
+                    audioUrl = googleCloudStorageService.uploadFile(audioFile, "songkaraokesadec/audio");
+                } else {
+                    audioUrl = oracleStorageService.uploadSongAudio(audioFile);
+                }
                 song.setUrl(audioUrl);
                 uploadedFiles.put("audioUrl", audioUrl);
             }
             
             if (videoFile != null && !videoFile.isEmpty()) {
-                String videoUrl = oracleStorageService.uploadSongVideo(videoFile);
+                String videoUrl;
+                if ("google".equalsIgnoreCase(cloudProvider)) {
+                    videoUrl = googleCloudStorageService.uploadFile(videoFile, "videokaraokesadec/video");
+                } else {
+                    videoUrl = oracleStorageService.uploadSongVideo(videoFile);
+                }
                 song.setVideo(videoUrl);
                 uploadedFiles.put("videoUrl", videoUrl);
+            }
+
+            // ✅ ADDED: Cover Image Upload Logic
+            if (coverImage != null && !coverImage.isEmpty()) {
+                String coverUrl;
+                if ("google".equalsIgnoreCase(cloudProvider)) {
+                    coverUrl = googleCloudStorageService.uploadFile(coverImage, "coverssadec");
+                } else {
+                    coverUrl = oracleStorageService.uploadFile(coverImage, "covers", OracleStorageService.BucketType.IMAGES);
+                }
+                song.setCoverImageUrl(coverUrl);
+                uploadedFiles.put("coverImageUrl", coverUrl);
             }
             
             songRepository.save(song);
