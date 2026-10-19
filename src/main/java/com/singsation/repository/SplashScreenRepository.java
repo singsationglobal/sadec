@@ -9,11 +9,11 @@ import java.util.Optional;
 @Repository
 public interface SplashScreenRepository extends JpaRepository<SplashScreen, Long> {
     Optional<SplashScreen> findByActiveTrue();
-    
+
     // ✅ ADDED: Recycle bin queries
     @Query("SELECT s FROM SplashScreen s WHERE s.isDeleted = false ORDER BY s.id DESC")
     List<SplashScreen> findAllNonDeleted();
-    
+
     @Query("SELECT s FROM SplashScreen s WHERE s.isDeleted = true ORDER BY s.deletedAt DESC")
     List<SplashScreen> findAllDeleted();
 }
