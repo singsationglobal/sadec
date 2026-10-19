@@ -3,7 +3,7 @@ package com.singsation.controller;
 import com.singsation.model.Song;
 import com.singsation.repository.SongRepository;
 import com.singsation.service.OracleStorageService;
-import com.singsation.service.GoogleCloudStorageService; // ✅ ADDED
+import com.singsation.service.GoogleCloudStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,22 +21,18 @@ public class SongFileUploadController {
     private OracleStorageService oracleStorageService;
 
     @Autowired
-    private GoogleCloudStorageService googleCloudStorageService; // ✅ ADDED
+    private GoogleCloudStorageService googleCloudStorageService;
 
     @Autowired
     private SongRepository songRepository;
 
-    /**
-     * Upload audio, video, and cover image files for a song
-     * POST /api/admin/songs/{id}/upload-files
-     */
     @PostMapping("/{id}/upload-files")
     public ResponseEntity<?> uploadSongFiles(
             @PathVariable Long id,
             @RequestParam(value = "audioFile", required = false) MultipartFile audioFile,
             @RequestParam(value = "videoFile", required = false) MultipartFile videoFile,
-            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage, // ✅ ADDED
-            @RequestParam(value = "cloudProvider", defaultValue = "oracle") String cloudProvider) { // ✅ ADDED
+            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage,
+            @RequestParam(value = "cloudProvider", defaultValue = "oracle") String cloudProvider) {
         
         try {
             Song song = songRepository.findById(id)
@@ -66,7 +62,6 @@ public class SongFileUploadController {
                 uploadedFiles.put("videoUrl", videoUrl);
             }
 
-            // ✅ ADDED: Cover Image Upload Logic
             if (coverImage != null && !coverImage.isEmpty()) {
                 String coverUrl;
                 if ("google".equalsIgnoreCase(cloudProvider)) {
