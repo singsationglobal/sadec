@@ -26,23 +26,19 @@ public class SplashScreenService {
     private String cloudProvider;
 
     public SplashScreen uploadSplashScreen(MultipartFile imageFile) throws IOException {
+        // Toggle between Oracle and Google Cloud
         String imageUrl;
-        
-        // Switch between clouds
         if ("google".equalsIgnoreCase(cloudProvider)) {
             imageUrl = googleCloudStorageService.uploadSplashScreen(imageFile);
         } else {
             imageUrl = oracleStorageService.uploadSplashScreen(imageFile);
         }
 
-        // Deactivate all existing splash screens
         List<SplashScreen> existing = splashScreenRepository.findAll();
         for (SplashScreen s : existing) {
             s.setActive(false);
             splashScreenRepository.save(s);
         }
-        
-        // Create new active splash screen
         SplashScreen splash = new SplashScreen();
         splash.setImageUrl(imageUrl);
         splash.setActive(true);
@@ -54,10 +50,9 @@ public class SplashScreenService {
     }
 
     public List<SplashScreen> getAllSplashScreens() {
-        return splashScreenRepository.findAll();
+        return splashScreenRepository.findAllNonDeleted();
     }
 
-    // Soft Delete (Move to Recycle Bin)
     public void deleteSplashScreen(Long id) {
         SplashScreen screen = splashScreenRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Splash screen not found"));
@@ -78,9 +73,8 @@ public class SplashScreenService {
         return splashScreenRepository.save(selected);
     }
 
-    // Recycle Bin Methods
     public List<SplashScreen> getDeletedSplashScreens() {
-        return splashScreenRepository.findByIsDeletedTrue();
+        return splashScreenRepository.findAllDeleted();
     }
 
     public void restoreFromBin(Long id) {
