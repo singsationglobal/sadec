@@ -10,6 +10,6 @@ import java.util.Optional;
 public interface SplashScreenRepository extends JpaRepository<SplashScreen, Long> {
     Optional<SplashScreen> findByActiveTrue();
     
-    // Recycle bin query
+    // Recycle Bin Query
     List<SplashScreen> findByIsDeletedTrue();
 }
