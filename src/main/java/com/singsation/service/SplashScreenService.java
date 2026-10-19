@@ -15,7 +15,7 @@ public class SplashScreenService {
     private SplashScreenRepository splashScreenRepository;
 
     public List<SplashScreen> getAllSplashScreens() {
-        return splashScreenRepository.findAllActiveScreens();
+        return splashScreenRepository.findAll();
     }
 
     public SplashScreen getSplashScreenById(Long id) {
@@ -31,17 +31,21 @@ public class SplashScreenService {
     @Transactional
     public SplashScreen createSplashScreen(SplashScreen splashScreen) {
         splashScreen.setDeleted(false);
-        splashScreen.setActive(false); // New uploads start as inactive
+        splashScreen.setActive(false);
+        splashScreen.setIsActive(false);
         return splashScreenRepository.save(splashScreen);
     }
 
-    // ✅ FIXED: This ensures ONLY ONE screen is active at a time
     @Transactional
     public void activateSplashScreen(Long id) {
-        // Step 1: Deactivate ALL screens first
-        splashScreenRepository.deactivateAll();
-        
-        // Step 2: Activate the selected screen
+        // Deactivate ALL screens first so only ONE is active
+        List<SplashScreen> allScreens = splashScreenRepository.findAll();
+        for (SplashScreen screen : allScreens) {
+            screen.setActive(false);
+            screen.setIsActive(false);
+            splashScreenRepository.save(screen);
+        }
+        // Activate the selected screen
         SplashScreen screen = getSplashScreenById(id);
         screen.setActive(true);
         screen.setIsActive(true);
