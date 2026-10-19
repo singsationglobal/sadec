@@ -12,11 +12,11 @@ import java.util.Optional;
 @Repository
 public interface SplashScreenRepository extends JpaRepository<SplashScreen, Long> {
     
-    // ✅ FIXED: Check the 'active' column (not is_active) to match your database
-    @Query("SELECT s FROM SplashScreen s WHERE s.active = true AND s.isDeleted = false")
+    // ✅ Check BOTH columns to match your database structure
+    @Query("SELECT s FROM SplashScreen s WHERE (s.isActive = true OR s.active = true) AND s.isDeleted = false")
     Optional<SplashScreen> findActiveScreen();
 
-    // ✅ Return all non-deleted screens for the admin panel
+    // ✅ Only return non-deleted screens
     @Query("SELECT s FROM SplashScreen s WHERE s.isDeleted = false ORDER BY s.id DESC")
     List<SplashScreen> findAllNonDeleted();
 
