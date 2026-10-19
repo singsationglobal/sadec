@@ -17,7 +17,7 @@ public class SplashScreen {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // ✅ ADDED: Recycle bin fields
+    // ✅ ADDED: Recycle bin fields (matches your SQL dump)
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
@@ -35,7 +35,7 @@ public class SplashScreen {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    // ✅ ADDED: Getters and Setters for recycle bin
+    // ✅ ADDED: Recycle bin getters/setters
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean deleted) { this.isDeleted = deleted; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
