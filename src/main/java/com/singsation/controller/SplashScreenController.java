@@ -9,11 +9,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 @RestController
 @RequestMapping("/api/admin/splash-screen")
@@ -28,13 +23,14 @@ public class SplashScreenController {
         return ResponseEntity.ok(screens);
     }
 
+    // ✅ THIS IS THE ENDPOINT YOUR MOBILE APP CALLS
     @GetMapping
     public ResponseEntity<?> getActiveSplashScreen() {
         SplashScreen screen = splashScreenService.getActiveSplashScreen();
         if (screen != null && screen.getImageUrl() != null && !screen.getImageUrl().isEmpty()) {
             return ResponseEntity.ok(Map.of("imageUrl", screen.getImageUrl()));
         }
-        // Fallback image so the box is never empty
+        // Return your default fallback image
         return ResponseEntity.ok(Map.of("imageUrl", "https://objectstorage.af-johannesburg-1.oraclecloud.com/n/axcbefxpjvzm/b/karaokeimages/o/Splashscreensplash.jpg"));
     }
 
@@ -47,45 +43,9 @@ public class SplashScreenController {
     @PostMapping("/upload")
     public ResponseEntity<?> uploadSplashScreen(@RequestParam("image") MultipartFile file) {
         try {
-            if (file == null || file.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("error", "No file provided"));
-            }
-
-            // ==========================================================
-            // OPTION 1: If you have your original Oracle Cloud upload code, 
-            // paste it here and return the cloud URL.
-            // Example: String cloudUrl = yourOracleService.upload(file);
-            // ==========================================================
-
-            // OPTION 2: Fallback local file save (Works immediately to prevent 400 errors)
-            String originalFilename = file.getOriginalFilename();
-            String extension = originalFilename != null && originalFilename.contains(".") 
-                ? originalFilename.substring(originalFilename.lastIndexOf(".")) 
-                : ".jpg";
-            String filename = UUID.randomUUID().toString() + extension;
-            
-            Path uploadDir = Paths.get("uploads");
-            if (!Files.exists(uploadDir)) {
-                Files.createDirectories(uploadDir);
-            }
-            
-            Path filePath = uploadDir.resolve(filename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            
-            // Note: For production on Render, you should ideally use Option 1 (Oracle Cloud). 
-            // This local path is a fallback to ensure the upload succeeds and doesn't break the app.
-            String fileUrl = "/uploads/" + filename; 
-
-            SplashScreen screen = new SplashScreen();
-            screen.setImageUrl(fileUrl);
-            screen.setActive(false);
-            screen.setIsActive(false);
-            splashScreenService.createSplashScreen(screen);
-
-            return ResponseEntity.ok(Map.of("imageUrl", fileUrl, "message", "Uploaded successfully"));
-
+            // TODO: Add your Oracle Cloud upload logic here
+            return ResponseEntity.badRequest().body(Map.of("error", "Upload logic needs your Oracle Cloud code"));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "Failed to upload: " + e.getMessage()));
         }
     }
