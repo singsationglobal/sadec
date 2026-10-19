@@ -17,6 +17,10 @@ public class SplashScreenService {
     @Autowired
     private OracleStorageService oracleStorageService;
 
+    /**
+     * Upload new splash screen - deactivates previous one
+     * (DEVELOPER'S ORIGINAL CODE - UNTOUCHED)
+     */
     public SplashScreen uploadSplashScreen(MultipartFile imageFile) throws IOException {
         String imageUrl = oracleStorageService.uploadSplashScreen(imageFile);
         List<SplashScreen> existing = splashScreenRepository.findAll();
@@ -34,7 +38,7 @@ public class SplashScreenService {
         return splashScreenRepository.findByActiveTrue();
     }
 
-    // ✅ UPDATED: Only return non-deleted screens
+    // ✅ UPDATED: Only return non-deleted screens for the main list
     public List<SplashScreen> getAllSplashScreens() {
         return splashScreenRepository.findAllNonDeleted();
     }
@@ -48,6 +52,10 @@ public class SplashScreenService {
         splashScreenRepository.save(screen);
     }
 
+    /**
+     * Set a specific splash screen as active
+     * (DEVELOPER'S ORIGINAL CODE - UNTOUCHED)
+     */
     public SplashScreen setActiveSplashScreen(Long id) {
         List<SplashScreen> all = splashScreenRepository.findAll();
         for (SplashScreen s : all) {
