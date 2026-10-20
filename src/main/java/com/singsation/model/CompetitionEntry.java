@@ -42,6 +42,10 @@ public class CompetitionEntry {
     private LocalDateTime createdAt = LocalDateTime.now();
     
     private String status;
+
+    // ✅ ADDED: The missing 'votes' field that is causing the crash
+    @Column(nullable = false)
+    private Integer votes = 0;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
@@ -85,6 +89,10 @@ public class CompetitionEntry {
     
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    
+    // ✅ ADDED: Getter and Setter for votes
+    public Integer getVotes() { return votes; }
+    public void setVotes(Integer votes) { this.votes = votes; }
     
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
