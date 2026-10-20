@@ -13,8 +13,8 @@ import java.util.List;
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByUserId(Long userId);
     
-    // ✅ UPDATED: Only return complaints the user has NOT archived
-    @Query("SELECT c FROM Complaint c WHERE c.user.id = :userId AND c.userArchived = false ORDER BY c.createdAt DESC")
+    // ✅ ORIGINAL QUERY RESTORED
+    @Query("SELECT c FROM Complaint c WHERE c.user.id = :userId ORDER BY c.createdAt DESC")
     List<Complaint> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
     
     // ✅ ADDED: Query for user-archived complaints
