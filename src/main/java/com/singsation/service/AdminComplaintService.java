@@ -7,7 +7,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class AdminComplaintService {
@@ -30,7 +32,13 @@ public class AdminComplaintService {
     public Complaint replyToComplaint(Long id, String adminReply, String status) {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Complaint not found"));
-        complaint.setAdminReply(adminReply);
+        
+        // ✅ FIX: Append to existing reply instead of overwriting
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"));
+        String newReplyBlock = "\n\n==============================\nAdmin Reply (" + timestamp + "):\n" + adminReply;
+        String currentReply = complaint.getAdminReply() == null ? "" : complaint.getAdminReply();
+        
+        complaint.setAdminReply(currentReply + newReplyBlock);
         complaint.setStatus(status);
         complaint.setUpdatedAt(LocalDateTime.now());
         return complaintRepository.save(complaint);
@@ -66,7 +74,6 @@ public class AdminComplaintService {
         return complaintRepository.countByIsDeletedFalse();
     }
 
-    // ✅ ADDED: User-side archive methods
     @Transactional
     public void archiveUserComplaint(Long id, Long userId) {
         Complaint complaint = complaintRepository.findById(id)
