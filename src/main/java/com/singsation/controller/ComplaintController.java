@@ -15,6 +15,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,6 @@ public class ComplaintController {
             }
             
             Complaint complaint = new Complaint();
-            // ✅ REVERTED: Back to original working logic
             complaint.setUser(user);
             complaint.setSubject(subject.trim());
             complaint.setMessage(message.trim());
@@ -208,7 +208,6 @@ public class ComplaintController {
                 return ResponseEntity.notFound().build();
             }
             
-            // ✅ FIXED: Uses getUser().getId() safely because this method is @Transactional
             if (currentUser == null || !currentUser.getId().equals(complaint.getUser().getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
             }
@@ -218,7 +217,12 @@ public class ComplaintController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Reply message is required"));
             }
             
-            complaint.setUserReply(userReply.trim());
+            // ✅ FIX: Append to existing reply instead of overwriting
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"));
+            String newReplyBlock = "\n\n==============================\nYour Reply (" + timestamp + "):\n" + userReply.trim();
+            String currentReply = complaint.getUserReply() == null ? "" : complaint.getUserReply();
+            
+            complaint.setUserReply(currentReply + newReplyBlock);
             complaint.setStatus("IN_PROGRESS");
             complaint.setUpdatedAt(LocalDateTime.now());
             
