@@ -219,6 +219,13 @@ public class ComplaintController {
             complaint.setUserReply(userReply.trim());
             complaint.setStatus("IN_PROGRESS");
             complaint.setUpdatedAt(LocalDateTime.now());
+            
+            // ✅ CRITICAL FIX: If the user replies, automatically restore the message 
+            // so it reappears in the Admin's active list AND the User's active list.
+            complaint.setDeleted(false);
+            complaint.setDeletedAt(null);
+            complaint.setUserArchived(false);
+            
             complaintRepository.save(complaint);
             
             return ResponseEntity.ok(Map.of("message", "Reply sent successfully"));
