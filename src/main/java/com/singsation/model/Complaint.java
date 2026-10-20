@@ -11,10 +11,8 @@ public class Complaint {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore
-    private User user;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
     
     @Column(nullable = false)
     private String subject;
@@ -43,28 +41,49 @@ public class Complaint {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JsonIgnore
+    private User user;
+    
+    public Complaint() {}
+    
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+    
     public String getSubject() { return subject; }
     public void setSubject(String subject) { this.subject = subject; }
+    
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
+    
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    
     public String getAdminReply() { return adminReply; }
     public void setAdminReply(String adminReply) { this.adminReply = adminReply; }
+    
     public String getUserReply() { return userReply; }
     public void setUserReply(String userReply) { this.userReply = userReply; }
+    
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean isDeleted) { this.isDeleted = isDeleted; }
+    
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    
     public boolean isUserArchived() { return userArchived; }
     public void setUserArchived(boolean userArchived) { this.userArchived = userArchived; }
+    
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }
