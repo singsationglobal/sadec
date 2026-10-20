@@ -207,7 +207,8 @@ public class ComplaintController {
                 return ResponseEntity.notFound().build();
             }
             
-            if (currentUser == null || !currentUser.getId().equals(complaint.getUser().getId())) {
+            // ✅ CRITICAL FIX: Use getUserId() directly to avoid LazyInitializationException crashes
+            if (currentUser == null || !currentUser.getId().equals(complaint.getUserId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
             }
             
@@ -220,8 +221,7 @@ public class ComplaintController {
             complaint.setStatus("IN_PROGRESS");
             complaint.setUpdatedAt(LocalDateTime.now());
             
-            // ✅ CRITICAL FIX: If the user replies, automatically restore the message 
-            // so it reappears in the Admin's active list AND the User's active list.
+            // Restore visibility if it was archived/deleted by user
             complaint.setDeleted(false);
             complaint.setDeletedAt(null);
             complaint.setUserArchived(false);
@@ -231,6 +231,7 @@ public class ComplaintController {
             return ResponseEntity.ok(Map.of("message", "Reply sent successfully"));
             
         } catch (Exception e) {
+            e.printStackTrace(); // This will print the exact error to your Render logs if it fails
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
@@ -247,7 +248,7 @@ public class ComplaintController {
                 return ResponseEntity.notFound().build();
             }
             
-            if (currentUser == null || !currentUser.getId().equals(complaint.getUser().getId())) {
+            if (currentUser == null || !currentUser.getId().equals(complaint.getUserId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
             }
             
