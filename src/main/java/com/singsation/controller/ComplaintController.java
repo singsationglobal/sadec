@@ -78,6 +78,7 @@ public class ComplaintController {
             }
             
             Complaint complaint = new Complaint();
+            // ✅ REVERTED: Back to original working logic
             complaint.setUser(user);
             complaint.setSubject(subject.trim());
             complaint.setMessage(message.trim());
@@ -207,8 +208,8 @@ public class ComplaintController {
                 return ResponseEntity.notFound().build();
             }
             
-            // ✅ CRITICAL FIX: Use getUserId() directly to avoid LazyInitializationException crashes
-            if (currentUser == null || !currentUser.getId().equals(complaint.getUserId())) {
+            // ✅ FIXED: Uses getUser().getId() safely because this method is @Transactional
+            if (currentUser == null || !currentUser.getId().equals(complaint.getUser().getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
             }
             
@@ -231,7 +232,7 @@ public class ComplaintController {
             return ResponseEntity.ok(Map.of("message", "Reply sent successfully"));
             
         } catch (Exception e) {
-            e.printStackTrace(); // This will print the exact error to your Render logs if it fails
+            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
@@ -248,7 +249,7 @@ public class ComplaintController {
                 return ResponseEntity.notFound().build();
             }
             
-            if (currentUser == null || !currentUser.getId().equals(complaint.getUserId())) {
+            if (currentUser == null || !currentUser.getId().equals(complaint.getUser().getId())) {
                 return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
             }
             
