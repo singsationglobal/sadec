@@ -1,8 +1,10 @@
 package com.singsation.service;
 
+import com.singsation.model.CoinTransaction;
 import com.singsation.model.Payment;
 import com.singsation.model.User;
 import com.singsation.model.Song;
+import com.singsation.repository.CoinTransactionRepository;
 import com.singsation.repository.PaymentRepository;
 import com.singsation.repository.UserRepository;
 import com.singsation.repository.SongRepository;
@@ -35,6 +37,9 @@ public class PaymentService {
     private SongRepository songRepository;
     
     @Autowired
+    private CoinTransactionRepository coinTransactionRepository;
+    
+    @Autowired
     private UserActivityLogService userActivityLogService;
 
     @Transactional
@@ -55,10 +60,10 @@ public class PaymentService {
         payment.setPaymentDate(LocalDateTime.now());
         payment.setDownloadAccessExpiry(LocalDateTime.now().plusDays(30));
         payment.setDescription("Video download: " + song.getTitle());
+        payment.setPaymentType("SONG_DOWNLOAD");
         
         Payment savedPayment = paymentRepository.save(payment);
         
-        // ✅ Log payment success activity
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         userActivityLogService.logActivity(user, "PAYMENT_SUCCESS", 
             "Paid R" + amount + " for song: " + song.getTitle() + " (Transaction: " + transactionId + ")", request);
@@ -83,14 +88,42 @@ public class PaymentService {
     }
 
     @Transactional
-    public void addCoinsToUser(Long userId, Integer coinAmount) {
+    public void processCoinPurchase(Long userId, Integer coinAmount, String transactionId, BigDecimal amount) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
         
-        int currentBalance = user.getCoinBalance();
-        user.setCoinBalance(currentBalance + coinAmount);
+        // 1. Create a Payment record for the coin purchase
+        Payment payment = new Payment();
+        payment.setUser(user);
+        payment.setSong(null); // No song for coin purchase
+        payment.setTransactionId(transactionId);
+        payment.setAmount(amount);
+        payment.setCurrency("ZAR");
+        payment.setStatus("COMPLETED");
+        payment.setPaymentDate(LocalDateTime.now());
+        payment.setDownloadAccessExpiry(null); // Not applicable
+        payment.setDescription("Bought " + coinAmount + " coins");
+        payment.setPaymentType("COIN_PURCHASE");
+        payment.setCoinAmount(coinAmount);
+        Payment savedPayment = paymentRepository.save(payment);
+
+        // 2. Add coins to user
+        int oldBalance = user.getCoinBalance();
+        int newBalance = oldBalance + coinAmount;
+        user.setCoinBalance(newBalance);
         userRepository.save(user);
         
-        logger.info("Added {} coins to user {}. New balance: {}", coinAmount, userId, user.getCoinBalance());
+        // 3. Record in the new ledger
+        CoinTransaction tx = new CoinTransaction();
+        tx.setUser(user);
+        tx.setType("PURCHASE");
+        tx.setAmount(coinAmount);
+        tx.setBalanceAfter(newBalance);
+        tx.setReference(transactionId);
+        tx.setDescription("Purchased " + coinAmount + " coins via Yoco");
+        tx.setPaymentId(savedPayment.getId());
+        coinTransactionRepository.save(tx);
+        
+        logger.info("Added {} coins to user {}. New balance: {}", coinAmount, userId, newBalance);
     }
 }
