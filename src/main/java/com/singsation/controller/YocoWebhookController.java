@@ -334,11 +334,12 @@ public class YocoWebhookController {
                 return ResponseEntity.ok(Map.of("status", "already_recorded"));
             }
             
-            // ✅ NEW: CHECK IF THIS IS A COIN PURCHASE
+                        // ✅ NEW: CHECK IF THIS IS A COIN PURCHASE
             if (!coinAmountStr.isEmpty()) {
                 Integer coinAmount = Integer.parseInt(coinAmountStr);
                 
-                paymentService.addCoinsToUser(userId, coinAmount);
+                // THIS IS THE NEW LINE: Processes payment, adds coins, and saves to ledger
+                paymentService.processCoinPurchase(userId, coinAmount, paymentId, amount);
                 
                 log.setProcessed(true);
                 webhookLogRepository.save(log);
