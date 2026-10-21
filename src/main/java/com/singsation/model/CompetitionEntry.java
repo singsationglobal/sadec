@@ -22,11 +22,20 @@ public class CompetitionEntry {
     private String artistName;
     
     @Column(nullable = false)
-    private String userid; // The unique stage name/ID
+    private String userid;
     
     @Column(name = "video_url", columnDefinition = "TEXT")
     private String videoUrl;
     
+    @Column(name = "video_public_id", length = 500)
+    private String videoPublicId;
+
+    @Column(name = "video_upload_status", nullable = false)
+    private String videoUploadStatus = "PENDING";
+
+    @Column(nullable = false)
+    private boolean votable = false;
+
     private Integer age;
     
     @Column(name = "contact_info")
@@ -43,7 +52,6 @@ public class CompetitionEntry {
     
     private String status;
 
-    // ✅ ADDED: The missing 'votes' field that is causing the crash
     @Column(nullable = false)
     private Integer votes = 0;
     
@@ -56,44 +64,36 @@ public class CompetitionEntry {
     
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
-    
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
-    
     public String getArtistName() { return artistName; }
     public void setArtistName(String artistName) { this.artistName = artistName; }
-    
     public String getUserid() { return userid; }
     public void setUserid(String userid) { this.userid = userid; }
-    
     public String getVideoUrl() { return videoUrl; }
     public void setVideoUrl(String videoUrl) { this.videoUrl = videoUrl; }
-    
+    public String getVideoPublicId() { return videoPublicId; }
+    public void setVideoPublicId(String videoPublicId) { this.videoPublicId = videoPublicId; }
+    public String getVideoUploadStatus() { return videoUploadStatus; }
+    public void setVideoUploadStatus(String videoUploadStatus) { this.videoUploadStatus = videoUploadStatus; }
+    public boolean isVotable() { return votable; }
+    public void setVotable(boolean votable) { this.votable = votable; }
     public Integer getAge() { return age; }
     public void setAge(Integer age) { this.age = age; }
-    
     public String getContactInfo() { return contactInfo; }
     public void setContactInfo(String contactInfo) { this.contactInfo = contactInfo; }
-    
     public String getProvince() { return province; }
     public void setProvince(String province) { this.province = province; }
-    
     public LocalDateTime getEntryDate() { return entryDate; }
     public void setEntryDate(LocalDateTime entryDate) { this.entryDate = entryDate; }
-    
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    
-    // ✅ ADDED: Getter and Setter for votes
     public Integer getVotes() { return votes; }
     public void setVotes(Integer votes) { this.votes = votes; }
-    
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 }
