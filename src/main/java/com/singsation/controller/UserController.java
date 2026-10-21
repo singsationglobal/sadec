@@ -1,6 +1,6 @@
 package com.singsation.controller;
 
-import com.singsation.service.OracleStorageService;
+import com.singsation.service.GoogleCloudStorageService; // ✅ Swapped to Google Cloud
 import com.singsation.service.UserActivityLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import com.singsation.dto.SongDTO;
@@ -46,8 +46,9 @@ public class UserController {
     @Autowired
     private SongService songService;
     
+    // ✅ Use Google Cloud Storage for user profiles
     @Autowired
-    private OracleStorageService oracleStorageService;
+    private GoogleCloudStorageService googleCloudStorageService;
     
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUserProfile(@PathVariable @NonNull Long userId) {
@@ -86,7 +87,6 @@ public class UserController {
                 }
             }
             
-            // NEW: Check if alternativeContact is already used as 2FA by another user
             if (userDetails.containsKey("alternativeContact")) {
                 String newAltContact = userDetails.get("alternativeContact").toString().trim();
                 if (!newAltContact.isEmpty()) {
@@ -101,7 +101,6 @@ public class UserController {
             
             User updatedUser = userService.updateUserFromMap(userId, userDetails);
             
-            // Log profile update activity
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
             String changes = "";
             if (userDetails.containsKey("userid")) changes += "UserID changed, ";
@@ -140,10 +139,9 @@ public class UserController {
             User user = userService.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
             
-            // Upload to Oracle storage bucket
-            String imageUrl = oracleStorageService.uploadStorageFile(imageFile, "profiles");
+            // ✅ Upload to Google Cloud Storage bucket
+            String imageUrl = googleCloudStorageService.uploadFile(imageFile, "profiles");
             
-            // Save URL to user profile using dedicated profileImageUrl field
             user.setProfileImageUrl(imageUrl);
             userService.saveUser(user);
             
@@ -151,8 +149,7 @@ public class UserController {
             response.put("profileImageUrl", imageUrl);
             response.put("message", "Profile image uploaded successfully");
             
-            // Log activity
-            userActivityLogService.logActivity(user, "PROFILE_IMAGE_UPLOAD", "Uploaded profile image", httpRequest);
+            userActivityLogService.logActivity(user, "PROFILE_IMAGE_UPLOAD", "Uploaded profile image to Google Cloud", httpRequest);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
