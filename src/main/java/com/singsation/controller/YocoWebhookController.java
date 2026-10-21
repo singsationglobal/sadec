@@ -334,7 +334,7 @@ public class YocoWebhookController {
                 return ResponseEntity.ok(Map.of("status", "already_recorded"));
             }
             
-                        // ✅ NEW: CHECK IF THIS IS A COIN PURCHASE
+            // ✅ NEW: CHECK IF THIS IS A COIN PURCHASE
             if (!coinAmountStr.isEmpty()) {
                 Integer coinAmount = Integer.parseInt(coinAmountStr);
                 
