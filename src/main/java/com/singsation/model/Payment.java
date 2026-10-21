@@ -18,7 +18,7 @@ public class Payment {
     private User user;
     
     @ManyToOne
-    @JoinColumn(name = "song_id", nullable = false)
+    @JoinColumn(name = "song_id", nullable = true) // Nullable for Coin Purchases
     @JsonIgnore
     private Song song;
     
@@ -37,11 +37,17 @@ public class Payment {
     @Column(name = "payment_date", nullable = false)
     private LocalDateTime paymentDate;
     
-    @Column(name = "download_access_expiry", nullable = false)
-    private LocalDateTime downloadAccessExpiry;
+    @Column(name = "download_access_expiry")
+    private LocalDateTime downloadAccessExpiry; // Nullable for Coin Purchases
     
     @Column(length = 500)
     private String description;
+
+    @Column(name = "payment_type", nullable = false)
+    private String paymentType = "SONG_DOWNLOAD"; // "SONG_DOWNLOAD" or "COIN_PURCHASE"
+
+    @Column(name = "coin_amount")
+    private Integer coinAmount;
     
     public Payment() {}
     
@@ -65,4 +71,8 @@ public class Payment {
     public void setDownloadAccessExpiry(LocalDateTime downloadAccessExpiry) { this.downloadAccessExpiry = downloadAccessExpiry; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getPaymentType() { return paymentType; }
+    public void setPaymentType(String paymentType) { this.paymentType = paymentType; }
+    public Integer getCoinAmount() { return coinAmount; }
+    public void setCoinAmount(Integer coinAmount) { this.coinAmount = coinAmount; }
 }
