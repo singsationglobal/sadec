@@ -109,7 +109,8 @@ public class AuthController {
             }
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid credentials"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            // ✅ Catch any BCrypt errors and return Bad Request instead of 500
+            return ResponseEntity.badRequest().body(Map.of("error", "Login failed: " + e.getMessage()));
         }
     }
     
@@ -153,8 +154,8 @@ public class AuthController {
                 user.setEmail(normalizedContact + "@temp.singsation.local");
             }
             
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-            user.setPassword(encoder.encode(request.getPassword()));
+            // ✅ FIXED: Removed double-hashing. UserService now handles the encoding.
+            user.setPassword(request.getPassword()); 
             
             user.setUserid("SING_" + System.currentTimeMillis());
             user.setWinner("www.singsationsadec.com");
@@ -168,7 +169,6 @@ public class AuthController {
             
             String storageKey = isEmailSignup ? emailInput : normalizedContact;
             
-            // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
             signupOtpStorage.put(storageKey, 
                 new SignupOtpData(otp, System.currentTimeMillis() + 3600000, String.valueOf(savedUser.getId()), token, resetToken));
             
@@ -277,7 +277,6 @@ public class AuthController {
         
         if (sent) {
             String resetToken = UUID.randomUUID().toString();
-            // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
             signupOtpStorage.put(normalizedPhone, 
                 new SignupOtpData(null, System.currentTimeMillis() + 3600000, String.valueOf(userOpt.get().getId()), null, resetToken));
             
@@ -311,7 +310,6 @@ public class AuthController {
             String newResetToken = UUID.randomUUID().toString();
             SignupOtpData existing = signupOtpStorage.get(normalizedPhone);
             if (existing != null) {
-                // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
                 signupOtpStorage.put(normalizedPhone, 
                     new SignupOtpData(null, System.currentTimeMillis() + 3600000, existing.userId, null, newResetToken));
             }
@@ -343,7 +341,6 @@ public class AuthController {
         String otp = String.format("%06d", new java.util.Random().nextInt(999999));
         String resetToken = UUID.randomUUID().toString();
         
-        // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
         signupOtpStorage.put(email, 
             new SignupOtpData(otp, System.currentTimeMillis() + 3600000, String.valueOf(userOpt.get().getId()), null, resetToken));
         
@@ -375,12 +372,11 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "OTP expired. Please request again."));
         }
         
-        if (!data.otp.equals(otp)) {
+        if (data.otp == null || !data.otp.equals(otp)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid OTP"));
         }
         
         String newResetToken = UUID.randomUUID().toString();
-        // ✅ FIXED: Changed from 300000 to 3600000 (5 min to 60 min)
         signupOtpStorage.put(email, 
             new SignupOtpData(null, System.currentTimeMillis() + 3600000, data.userId, null, newResetToken));
         
