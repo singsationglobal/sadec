@@ -28,11 +28,24 @@ public class AdminAuthService {
         if (adminOpt.isPresent()) {
             Admin admin = adminOpt.get();
             
-            boolean passwordMatches = passwordEncoder.matches(rawPassword, admin.getPassword());
+            boolean passwordMatches = false;
             
+            try {
+                // First try with the injected encoder
+                passwordMatches = passwordEncoder.matches(rawPassword, admin.getPassword());
+            } catch (Exception e) {
+                System.out.println("Primary encoder failed, trying fallback for $2b$ hashes...");
+            }
+            
+            // If it failed, it might be a $2b$ hash from Node.js. 
+            // The standard BCryptPasswordEncoder in Spring can handle this if we just re-instantiate it.
             if (!passwordMatches) {
-                BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
-                passwordMatches = bcrypt.matches(rawPassword, admin.getPassword());
+                try {
+                    BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
+                    passwordMatches = bcrypt.matches(rawPassword, admin.getPassword());
+                } catch (Exception e) {
+                    System.out.println("Fallback encoder failed: " + e.getMessage());
+                }
             }
             
             if (passwordMatches && admin.isActive()) {
