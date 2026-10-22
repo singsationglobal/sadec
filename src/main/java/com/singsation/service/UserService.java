@@ -32,7 +32,6 @@ public class UserService {
             }
         }
         
-        // ✅ CASE-INSENSITIVE USERID CHECK
         if (user.getUserid() != null && !user.getUserid().isEmpty()) {
             Optional<User> existingByUserid = userRepository.findByUseridIgnoreCase(user.getUserid());
             if (existingByUserid.isPresent()) {
@@ -46,7 +45,11 @@ public class UserService {
             user.setUserid(newUserid);
         }
         
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // ✅ FIX: Only hash the password if it isn't already hashed
+        if (user.getPassword() != null && !user.getPassword().startsWith("$2a$") && !user.getPassword().startsWith("$2b$")) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
+        
         return userRepository.save(user);
     }
     
@@ -66,7 +69,6 @@ public class UserService {
         return userRepository.findByUserid(userid);
     }
     
-    // ✅ NEW: Find user by their 2-way authentication contact (used to block duplicate 2FA signups)
     public Optional<User> findByAlternativeContact(String alternativeContact) {
         return userRepository.findByAlternativeContact(alternativeContact);
     }
@@ -80,7 +82,6 @@ public class UserService {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // ✅ CASE-INSENSITIVE USERID CHECK
         if (userDetails.getUserid() != null && !userDetails.getUserid().isEmpty() 
             && !userDetails.getUserid().equalsIgnoreCase(user.getUserid())) {
             
@@ -115,7 +116,6 @@ public class UserService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // ✅ CASE-INSENSITIVE USERID CHECK
         if (userDetails.containsKey("userid")) {
             String newUserid = userDetails.get("userid").toString();
             if (!newUserid.isEmpty() && !newUserid.equalsIgnoreCase(user.getUserid())) {
@@ -140,7 +140,7 @@ public class UserService {
             try {
                 user.setAge(Integer.parseInt(userDetails.get("age").toString()));
             } catch (NumberFormatException e) {
-                // Ignore invalid age
+                // Ignore
             }
         }
         if (userDetails.containsKey("alternativeContact")) {
@@ -156,7 +156,6 @@ public class UserService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // ✅ CASE-INSENSITIVE USERID CHECK
         if (newUserid != null && !newUserid.isEmpty() && !newUserid.equalsIgnoreCase(user.getUserid())) {
             Optional<User> existing = userRepository.findByUseridIgnoreCase(newUserid);
             if (existing.isPresent() && !existing.get().getId().equals(userId)) {
