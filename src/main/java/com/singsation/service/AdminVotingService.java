@@ -2,15 +2,13 @@ package com.singsation.service;
 
 import com.singsation.model.User;
 import com.singsation.model.Vote;
+import com.singsation.repository.CoinTransactionRepository;
 import com.singsation.repository.UserRepository;
 import com.singsation.repository.VoteRepository;
-import com.singsation.repository.WebhookLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class AdminVotingService {
@@ -22,7 +20,7 @@ public class AdminVotingService {
     private UserRepository userRepository;
 
     @Autowired
-    private WebhookLogRepository webhookLogRepository;
+    private CoinTransactionRepository coinTransactionRepository;
 
     // 1. Get total votes grouped by Artist User ID
     public Map<String, Long> getTotalVotesByArtist() {
@@ -60,15 +58,13 @@ public class AdminVotingService {
     public Map<String, Object> getUserCoinStats(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         
-        // Total coins spent on voting
-        Long totalSpent = voteRepository.sumCostByVoterUserId(userId);
+        // ✅ FIXED: Get real spent coins from the ledger
+        Long totalSpent = coinTransactionRepository.sumSpentCoinsByUserId(userId);
         if (totalSpent == null) totalSpent = 0L;
 
-        // Total coins bought (calculated from successful webhook logs)
-        // Note: You may need to ensure your webhook logs save the 'coinAmount' in a searchable way, 
-        // or you can track this in a separate 'CoinTransaction' table. 
-        // For now, we estimate based on current balance + spent.
-        long totalBought = user.getCoinBalance() + totalSpent;
+        // ✅ FIXED: Get real purchased coins from the ledger
+        Long totalBought = coinTransactionRepository.sumPurchasedCoinsByUserId(userId);
+        if (totalBought == null) totalBought = 0L;
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("userId", userId);
