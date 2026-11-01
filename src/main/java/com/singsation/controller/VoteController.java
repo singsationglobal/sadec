@@ -22,37 +22,46 @@ public class VoteController {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Cast a vote for a competition entry using a gift instrument.
+     *
+     * Request body:
+     *   { "entryId": 123, "giftType": "DRUMS" }
+     *
+     * The user is identified from the JWT — never trust a userId in the body.
+     * The cost is resolved server-side from GiftType. Client cannot spoof it.
+     */
     @PostMapping("/vote")
     public ResponseEntity<?> castVote(@RequestBody Map<String, Object> payload) {
         try {
-            // 1. SECURITY FIX: Get userId from the JWT token, NOT the request body
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth == null || !(auth.getPrincipal() instanceof UserDetails)) {
                 return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
             }
             String email = ((UserDetails) auth.getPrincipal()).getUsername();
             User voter = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-            
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
             Long voterUserId = voter.getId();
 
-            // 2. Get the entry ID, coin cost (1, 2, 3), and vote type
-            if (!payload.containsKey("entryId") || !payload.containsKey("cost")) {
-                return ResponseEntity.badRequest().body(Map.of("error", "entryId and cost are required"));
+            if (!payload.containsKey("entryId") || payload.get("entryId") == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "entryId is required"));
+            }
+            if (!payload.containsKey("giftType") || payload.get("giftType") == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "giftType is required"));
             }
 
             Long entryId = Long.valueOf(payload.get("entryId").toString());
-            int cost = Integer.parseInt(payload.get("cost").toString());
-            
-            // Optional: Default to COIN, but can pass "ROSE" or "UNIVERSE"
-            String voteType = payload.containsKey("voteType") ? payload.get("voteType").toString() : "COIN";
+            String giftType = payload.get("giftType").toString();
 
-            if (cost <= 0) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Cost must be greater than 0"));
-            }
+            votingService.castGiftVote(voterUserId, entryId, giftType);
 
-            votingService.castVote(voterUserId, entryId, cost, voteType);
-            return ResponseEntity.ok(Map.of("message", "Vote cast successfully"));
+            // Return the new balance so the app updates instantly
+            int newBalance = votingService.getCoinBalance(voterUserId);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Vote cast successfully",
+                    "newBalance", newBalance
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
