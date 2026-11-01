@@ -23,7 +23,11 @@ public class Vote {
     private int cost;
 
     @Column(name = "vote_type", nullable = false)
-    private String voteType = "COIN"; // "COIN", "ROSE", "UNIVERSE"
+    private String voteType = "COIN";
+
+    // ✅ NEW: which gift instrument was sent (MIC, DRUMS, LEGEND, etc.)
+    @Column(name = "gift_type", length = 20)
+    private String giftType;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -42,6 +46,8 @@ public class Vote {
     public void setCost(int cost) { this.cost = cost; }
     public String getVoteType() { return voteType; }
     public void setVoteType(String voteType) { this.voteType = voteType; }
+    public String getGiftType() { return giftType; }
+    public void setGiftType(String giftType) { this.giftType = giftType; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
