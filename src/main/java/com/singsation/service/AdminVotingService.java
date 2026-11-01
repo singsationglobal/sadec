@@ -22,7 +22,6 @@ public class AdminVotingService {
     @Autowired
     private CoinTransactionRepository coinTransactionRepository;
 
-    // 1. Get total votes grouped by Artist User ID
     public Map<String, Long> getTotalVotesByArtist() {
         List<Object[]> results = voteRepository.countVotesGroupedByArtist();
         Map<String, Long> voteCounts = new HashMap<>();
@@ -32,11 +31,10 @@ public class AdminVotingService {
         return voteCounts;
     }
 
-    // 2. Get detailed list of who voted for a specific artist
     public List<Map<String, Object>> getVotersForArtist(String artistUserid) {
         List<Vote> votes = voteRepository.findByArtistUserid(artistUserid);
         List<Map<String, Object>> voterDetails = new ArrayList<>();
-        
+
         for (Vote vote : votes) {
             Optional<User> voterOpt = userRepository.findById(vote.getVoterUserId());
             if (voterOpt.isPresent()) {
@@ -47,6 +45,7 @@ public class AdminVotingService {
                 details.put("voterName", voter.getName() + " " + voter.getSurname());
                 details.put("voterEmail", voter.getEmail());
                 details.put("coinsSpentOnVote", vote.getCost());
+                details.put("giftType", vote.getGiftType()); // ✅ NEW: which instrument was sent
                 details.put("votedAt", vote.getCreatedAt());
                 voterDetails.add(details);
             }
@@ -54,15 +53,12 @@ public class AdminVotingService {
         return voterDetails;
     }
 
-    // 3. Get coin statistics for a specific user
     public Map<String, Object> getUserCoinStats(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        
-        // ✅ FIXED: Get real spent coins from the ledger
+
         Long totalSpent = coinTransactionRepository.sumSpentCoinsByUserId(userId);
         if (totalSpent == null) totalSpent = 0L;
 
-        // ✅ FIXED: Get real purchased coins from the ledger
         Long totalBought = coinTransactionRepository.sumPurchasedCoinsByUserId(userId);
         if (totalBought == null) totalBought = 0L;
 
@@ -71,22 +67,30 @@ public class AdminVotingService {
         stats.put("currentBalance", user.getCoinBalance());
         stats.put("totalCoinsBought", totalBought);
         stats.put("totalCoinsSpent", totalSpent);
-        
+
         return stats;
     }
 
-    // 4. Get overall platform coin and voting stats
+    /**
+     * ✅ FIXED: platform-wide stats now come from the coin ledger (source of truth),
+     * so the dashboard reflects ALL coin flow — purchases and votes — not just vote rows.
+     */
     public Map<String, Object> getPlatformStats() {
         long totalUsers = userRepository.count();
         long totalVotes = voteRepository.count();
-        Long totalCoinsSpentPlatform = voteRepository.sumAllCosts();
+
+        Long totalCoinsSpentPlatform = coinTransactionRepository.sumAllSpentCoins();
         if (totalCoinsSpentPlatform == null) totalCoinsSpentPlatform = 0L;
+
+        Long totalCoinsPurchasedPlatform = coinTransactionRepository.sumAllPurchasedCoins();
+        if (totalCoinsPurchasedPlatform == null) totalCoinsPurchasedPlatform = 0L;
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", totalUsers);
         stats.put("totalVotesCast", totalVotes);
         stats.put("totalCoinsSpentPlatform", totalCoinsSpentPlatform);
-        
+        stats.put("totalCoinsPurchasedPlatform", totalCoinsPurchasedPlatform);
+
         return stats;
     }
 }
