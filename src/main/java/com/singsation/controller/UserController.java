@@ -1,6 +1,6 @@
 package com.singsation.controller;
 
-import com.singsation.service.GoogleCloudStorageService; // ✅ Swapped to Google Cloud
+import com.singsation.service.GoogleCloudStorageService;
 import com.singsation.service.UserActivityLogService;
 import jakarta.servlet.http.HttpServletRequest;
 import com.singsation.dto.SongDTO;
@@ -28,9 +28,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-    
+
     @Autowired
     private UserActivityLogService userActivityLogService;
 
@@ -39,22 +39,21 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private FavoriteService favoriteService;
-    
+
     @Autowired
     private SongService songService;
-    
-    // ✅ Use Google Cloud Storage for user profiles
+
     @Autowired
     private GoogleCloudStorageService googleCloudStorageService;
-    
+
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUserProfile(@PathVariable @NonNull Long userId) {
         User user = userService.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
-        
+
         HashMap<String, Object> response = new HashMap<>();
         response.put("id", user.getId());
         response.put("name", user.getName());
@@ -69,15 +68,15 @@ public class UserController {
         response.put("age", user.getAge() != null ? user.getAge() : 0);
         response.put("hasCompletedEntry", user.isHasCompletedEntry());
         response.put("profileImageUrl", user.getProfileImageUrl());
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @PutMapping("/{userId}")
     public ResponseEntity<?> updateUser(@PathVariable @NonNull Long userId, @RequestBody Map<String, Object> userDetails) {
         try {
             String newUserid = userDetails.containsKey("userid") ? userDetails.get("userid").toString() : null;
-            
+
             if (newUserid != null && !newUserid.isEmpty()) {
                 var existingUser = userService.findByUserid(newUserid);
                 if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
@@ -86,7 +85,7 @@ public class UserController {
                     ));
                 }
             }
-            
+
             if (userDetails.containsKey("alternativeContact")) {
                 String newAltContact = userDetails.get("alternativeContact").toString().trim();
                 if (!newAltContact.isEmpty()) {
@@ -98,9 +97,9 @@ public class UserController {
                     }
                 }
             }
-            
+
             User updatedUser = userService.updateUserFromMap(userId, userDetails);
-            
+
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
             String changes = "";
             if (userDetails.containsKey("userid")) changes += "UserID changed, ";
@@ -109,7 +108,7 @@ public class UserController {
             if (userDetails.containsKey("alternativeContact")) changes += "2FA contact changed, ";
             if (changes.isEmpty()) changes = "Profile updated";
             userActivityLogService.logActivity(updatedUser, "PROFILE_UPDATE", changes, request);
-            
+
             HashMap<String, Object> response = new HashMap<>();
             response.put("id", updatedUser.getId());
             response.put("name", updatedUser.getName());
@@ -124,13 +123,13 @@ public class UserController {
             response.put("age", updatedUser.getAge() != null ? updatedUser.getAge() : 0);
             response.put("hasCompletedEntry", updatedUser.isHasCompletedEntry());
             response.put("profileImageUrl", updatedUser.getProfileImageUrl());
-            
+
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-    
+
     @PutMapping("/{userId}/profile-image")
     public ResponseEntity<?> uploadProfileImage(
             @PathVariable Long userId,
@@ -138,37 +137,36 @@ public class UserController {
         try {
             User user = userService.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            // ✅ Upload to Google Cloud Storage bucket
+
             String imageUrl = googleCloudStorageService.uploadFile(imageFile, "profiles");
-            
+
             user.setProfileImageUrl(imageUrl);
             userService.saveUser(user);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("profileImageUrl", imageUrl);
             response.put("message", "Profile image uploaded successfully");
-            
+
             userActivityLogService.logActivity(user, "PROFILE_IMAGE_UPLOAD", "Uploaded profile image to Google Cloud", httpRequest);
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to upload profile image: " + e.getMessage()));
         }
     }
-    
+
     @PostMapping("/{userId}/favorites/{songId}")
     public ResponseEntity<?> addFavorite(@PathVariable @NonNull Long userId, @PathVariable @NonNull Long songId) {
         favoriteService.addFavorite(userId, songId);
         return ResponseEntity.ok(Map.of("message", "Favorite added"));
     }
-    
+
     @DeleteMapping("/{userId}/favorites/{songId}")
     public ResponseEntity<?> removeFavorite(@PathVariable @NonNull Long userId, @PathVariable @NonNull Long songId) {
         favoriteService.removeFavorite(userId, songId);
         return ResponseEntity.ok(Map.of("message", "Favorite removed"));
     }
-    
+
     @GetMapping("/{userId}/favorites")
     public ResponseEntity<?> getFavorites(@PathVariable @NonNull Long userId) {
         try {
@@ -181,20 +179,20 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-    
+
     @PostMapping("/{userId}/songs/{songId}/play")
     public ResponseEntity<?> trackSongPlay(@PathVariable @NonNull Long userId, @PathVariable @NonNull Long songId) {
         try {
             User user = userService.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-            
+
             Song song = songService.getSongById(songId);
-            
+
             userActivityLogService.logActivity(user, "PLAY_SONG", "Played song: " + song.getTitle() + " (ID: " + songId + ")", httpRequest);
-            
-            logger.info("User {} played song {} - {} by {}", 
+
+            logger.info("User {} played song {} - {} by {}",
                 userId, songId, song.getTitle(), song.getArtist());
-            
+
             return ResponseEntity.ok(Map.of(
                 "message", "Play tracked successfully",
                 "userId", userId,
@@ -206,14 +204,44 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-    
+
+    /**
+     * NEW: Account deletion via POST.
+     * Password travels in the JSON body — reliable across all Android/iOS
+     * network stacks (some proxies strip DELETE bodies, which made the old
+     * DELETE-based endpoint occasionally fail silently).
+     *
+     * The old DELETE /account endpoint below is kept unchanged for backward
+     * compatibility, so nothing currently live breaks.
+     */
+    @PostMapping("/{userId}/delete-account")
+    public ResponseEntity<?> deleteAccountPost(
+            @PathVariable @NonNull Long userId,
+            @RequestBody Map<String, String> request) {
+
+        String password = request.get("password");
+
+        try {
+            userService.deleteUserAccount(userId, password);
+            return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred"));
+        }
+    }
+
+    /**
+     * LEGACY: original DELETE endpoint — kept so any installed app version
+     * still using this path continues to work without forcing an update.
+     */
     @DeleteMapping("/{userId}/account")
     public ResponseEntity<?> deleteAccount(
             @PathVariable @NonNull Long userId,
             @RequestBody Map<String, String> request) {
-        
+
         String password = request.get("password");
-        
+
         try {
             userService.deleteUserAccount(userId, password);
             return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
