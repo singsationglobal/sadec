@@ -22,11 +22,19 @@ public class AdminVotingService {
     @Autowired
     private CoinTransactionRepository coinTransactionRepository;
 
+    /**
+     * Total coins received per artist.
+     * The value is now SUM(vote.cost) — coins — not the count of vote rows.
+     * The map key is still the artist's userid, exactly as before, so the
+     * admin dashboard chart keeps working without change.
+     */
     public Map<String, Long> getTotalVotesByArtist() {
         List<Object[]> results = voteRepository.countVotesGroupedByArtist();
         Map<String, Long> voteCounts = new HashMap<>();
         for (Object[] row : results) {
-            voteCounts.put((String) row[0], (Long) row[1]);
+            String artistUserid = (String) row[0];
+            Number sum = (Number) row[1];
+            voteCounts.put(artistUserid, sum == null ? 0L : sum.longValue());
         }
         return voteCounts;
     }
@@ -45,7 +53,7 @@ public class AdminVotingService {
                 details.put("voterName", voter.getName() + " " + voter.getSurname());
                 details.put("voterEmail", voter.getEmail());
                 details.put("coinsSpentOnVote", vote.getCost());
-                details.put("giftType", vote.getGiftType()); // ✅ NEW: which instrument was sent
+                details.put("giftType", vote.getGiftType());
                 details.put("votedAt", vote.getCreatedAt());
                 voterDetails.add(details);
             }
@@ -71,10 +79,6 @@ public class AdminVotingService {
         return stats;
     }
 
-    /**
-     * ✅ FIXED: platform-wide stats now come from the coin ledger (source of truth),
-     * so the dashboard reflects ALL coin flow — purchases and votes — not just vote rows.
-     */
     public Map<String, Object> getPlatformStats() {
         long totalUsers = userRepository.count();
         long totalVotes = voteRepository.count();
