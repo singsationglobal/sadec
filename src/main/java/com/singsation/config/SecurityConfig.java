@@ -42,16 +42,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
         configuration.setAllowedOriginPatterns(List.of("*"));
-
-        configuration.setAllowedMethods(Arrays.asList(
-            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
-        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -62,58 +57,44 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints (no authentication needed)
-                .requestMatchers(
-                    "/",
-                    "/favicon.ico",
-                    "/health",
-                    "/api/auth/**",
-                    "/api/webhooks/yoco/**",
-                    "/actuator/health",
-                    "/api/songs",
-                    "/api/songs/**",
-                    "/api/splash-screen",
-                    "/api/winners/active",
-                    "/error"
-                ).permitAll()
-
-                // Admin Auth - public
+                // 1. Truly public endpoints
+                .requestMatchers("/", "/favicon.ico", "/health", "/error", "/actuator/health").permitAll()
+                
+                // 2. Auth endpoints (login, register, OTP) are public
+                .requestMatchers("/api/auth/**").permitAll()
+                
+                // 3. Public read-only data (songs, winners, splash, webhooks)
+                .requestMatchers("/api/songs", "/api/songs/**").permitAll()
+                .requestMatchers("/api/splash-screen").permitAll()
+                .requestMatchers("/api/winners/active").permitAll()
+                .requestMatchers("/api/webhooks/yoco/**").permitAll()
+                
+                // 4. Admin Login is public
                 .requestMatchers("/api/admin/auth/login").permitAll()
 
-                // ===== ADMIN ENDPOINTS WITH ROLE RESTRICTIONS =====
-                // SUPER_ADMIN and ADMIN only
+                // 5. Admin Panel (Requires Roles)
                 .requestMatchers("/api/admin/users/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/admin/songs/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/admin/splash-screen/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/admin/winners/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/admin/staff/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-
-                // SUPER_ADMIN, ADMIN, MODERATOR can view logs and user activity
                 .requestMatchers("/api/admin/logs/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR")
                 .requestMatchers("/api/admin/user-activity/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR")
-
-                // SUPER_ADMIN, ADMIN, MODERATOR, SUPPORT can view complaints
                 .requestMatchers("/api/admin/complaints/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR", "SUPPORT")
-
-                // SUPER_ADMIN, ADMIN, MODERATOR can view payments
                 .requestMatchers("/api/admin/payments/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR")
-
-                // Dashboard - all admin roles can view
                 .requestMatchers("/api/admin/dashboard/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR", "SUPPORT")
+                .requestMatchers("/api/admin/voting/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR")
 
-                // ===== USER ENDPOINTS =====
-                .requestMatchers(
-                    "/api/users/**",
-                    "/api/competitions/**",
-                    "/api/complaints/**",
-                    "/api/payments/**"
-                ).authenticated()
+                // 6. Karaoke App User Endpoints (MUST BE AUTHENTICATED)
+                .requestMatchers("/api/users/**").authenticated()
+                .requestMatchers("/api/competitions/**").authenticated()
+                .requestMatchers("/api/complaints/**").authenticated()
+                .requestMatchers("/api/payments/**").authenticated()
+                .requestMatchers("/api/votes/**").authenticated()
 
-                // All other requests require authentication
+                // 7. Everything else requires a login
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
