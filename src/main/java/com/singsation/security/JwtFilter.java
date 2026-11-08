@@ -26,25 +26,17 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
-    // PUBLIC paths that don't require JWT
+    // ✅ FIXED: Removed wildcards that were accidentally exposing user routes
     private static final List<String> PUBLIC_PATHS = Arrays.asList(
         "/",
         "/favicon.ico",
         "/health",
-        "/api/auth/login",
-        "/api/auth/register",
-        "/api/auth/send-sms-otp",
-        "/api/auth/verify-sms-otp",
-        "/api/auth/send-email-otp",
-        "/api/auth/verify-email-otp",
-        "/api/auth/reset-password-with-sms",
-        "/api/auth/reset-password-with-email",
-        "/api/auth/verify-signup-otp",
-        "/api/webhooks/yoco",
+        "/api/auth/",
+        "/api/webhooks/yoco/",
+        "/actuator/health",
         "/api/songs",
         "/api/splash-screen",
         "/api/winners/active",
-        "/actuator/health",
         "/api/admin/auth/login",
         "/error"
     );
@@ -69,13 +61,23 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Check if this is a public path
+        // Check if this is a public path (Strict matching now)
+        boolean isPublic = false;
         for (String publicPath : PUBLIC_PATHS) {
-            if (path.startsWith(publicPath)) {
-                System.out.println("PUBLIC path - skipping JWT: " + path);
-                chain.doFilter(request, response);
-                return;
+            if (publicPath.equals("/") && path.equals("/")) {
+                isPublic = true;
+                break;
             }
+            if (!publicPath.equals("/") && path.startsWith(publicPath)) {
+                isPublic = true;
+                break;
+            }
+        }
+
+        if (isPublic) {
+            System.out.println("PUBLIC path - skipping JWT: " + path);
+            chain.doFilter(request, response);
+            return;
         }
 
         // ALL other paths require JWT validation
@@ -96,27 +98,15 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        System.out.println("✅ Token found, length: " + token.length());
-        System.out.println("Token first 20 chars: " + token.substring(0, Math.min(20, token.length())) + "...");
-
-        // Validate the token
-        boolean isValid = jwtUtil.validateToken(token);
-        System.out.println("Token validation result: " + isValid);
-
-        if (isValid) {
+        
+        if (jwtUtil.validateToken(token)) {
             String username = jwtUtil.getUsernameFromToken(token);
-            System.out.println("Username from token: " + username);
-
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            System.out.println("UserDetails loaded: " + userDetails.getUsername());
-            System.out.println("Authorities: " + userDetails.getAuthorities());
-
+            
             UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            System.out.println("✅ Authentication set successfully");
-            request.setAttribute("username", username);
+            System.out.println("✅ Authentication set successfully for: " + username);
         } else {
             System.out.println("❌ JWT validation FAILED - Invalid token");
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
