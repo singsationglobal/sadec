@@ -7,22 +7,23 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface VoteRepository extends JpaRepository<Vote, Long> {
-    
-    @Query("SELECT COUNT(v) FROM Vote v WHERE v.artistUserid = :artistUserid")
+
+    // Sum of coins received by an artist (was: count of votes)
+    @Query("SELECT COALESCE(SUM(v.cost), 0) FROM Vote v WHERE v.artistUserid = :artistUserid")
     long countVotesByArtistUserid(@Param("artistUserid") String artistUserid);
 
-    // NEW: Group votes by artist
-    @Query("SELECT v.artistUserid, COUNT(v) FROM Vote v GROUP BY v.artistUserid")
+    // Group coins received by artist
+    @Query("SELECT v.artistUserid, COALESCE(SUM(v.cost), 0) FROM Vote v GROUP BY v.artistUserid")
     List<Object[]> countVotesGroupedByArtist();
 
-    // NEW: Get all votes for a specific artist
+    // All vote rows for a specific artist (unchanged)
     List<Vote> findByArtistUserid(String artistUserid);
 
-    // NEW: Sum total coins spent by a specific user on voting
+    // Sum total coins spent by a specific user on voting (unchanged)
     @Query("SELECT SUM(v.cost) FROM Vote v WHERE v.voterUserId = :userId")
     Long sumCostByVoterUserId(@Param("userId") Long userId);
 
-    // NEW: Sum total coins spent across the entire platform
+    // Sum total coins spent across the entire platform (unchanged)
     @Query("SELECT SUM(v.cost) FROM Vote v")
     Long sumAllCosts();
 }
