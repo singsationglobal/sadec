@@ -62,13 +62,15 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session -> 
+            .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints (no authentication needed)
                 .requestMatchers(
-                    "/health", 
+                    "/",
+                    "/favicon.ico",
+                    "/health",
                     "/api/auth/**",
                     "/api/webhooks/yoco/**",
                     "/actuator/health",
@@ -78,10 +80,10 @@ public class SecurityConfig {
                     "/api/winners/active",
                     "/error"
                 ).permitAll()
-                
+
                 // Admin Auth - public
                 .requestMatchers("/api/admin/auth/login").permitAll()
-                
+
                 // ===== ADMIN ENDPOINTS WITH ROLE RESTRICTIONS =====
                 // SUPER_ADMIN and ADMIN only
                 .requestMatchers("/api/admin/users/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
@@ -89,20 +91,20 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/splash-screen/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/admin/winners/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
                 .requestMatchers("/api/admin/staff/**").hasAnyRole("SUPER_ADMIN", "ADMIN")
-                
+
                 // SUPER_ADMIN, ADMIN, MODERATOR can view logs and user activity
                 .requestMatchers("/api/admin/logs/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR")
                 .requestMatchers("/api/admin/user-activity/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR")
-                
+
                 // SUPER_ADMIN, ADMIN, MODERATOR, SUPPORT can view complaints
                 .requestMatchers("/api/admin/complaints/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR", "SUPPORT")
-                
+
                 // SUPER_ADMIN, ADMIN, MODERATOR can view payments
                 .requestMatchers("/api/admin/payments/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR")
-                
+
                 // Dashboard - all admin roles can view
                 .requestMatchers("/api/admin/dashboard/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MODERATOR", "SUPPORT")
-                
+
                 // ===== USER ENDPOINTS =====
                 .requestMatchers(
                     "/api/users/**",
@@ -110,7 +112,7 @@ public class SecurityConfig {
                     "/api/complaints/**",
                     "/api/payments/**"
                 ).authenticated()
-                
+
                 // All other requests require authentication
                 .anyRequest().authenticated()
             )
